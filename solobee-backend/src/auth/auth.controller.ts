@@ -1,4 +1,11 @@
-import { Controller, Post, Body, HttpCode, HttpStatus } from '@nestjs/common';
+import {
+  Controller,
+  Post,
+  Body,
+  HttpCode,
+  HttpStatus,
+  Req,
+} from '@nestjs/common';
 import { AuthService } from './auth.service';
 import { ErrorResponse } from 'src/core/utils/base-response';
 import { LoginResponseDto } from './dto/login-response.dto';
@@ -9,7 +16,11 @@ import {
   ApiOperation,
   ApiResponse,
   ApiExtraModels,
+  ApiBearerAuth,
 } from '@nestjs/swagger';
+import { Roles } from 'src/core/decorators/roles.decorator';
+import { Role } from 'src/core/utils/role.enum';
+import { JwtPayload } from 'src/infrastructure/jwt/jwt.strategy';
 
 @ApiTags('Auth')
 @ApiExtraModels(LoginResponseDto, ErrorResponse)
@@ -36,6 +47,31 @@ export class AuthController {
       loginDto.username,
       loginDto.password,
     );
+    const response = new LoginResponseDto();
+    response.data = result;
+    return response;
+  }
+
+  @ApiBearerAuth()
+  @Roles(Role.STUDENT)
+  @Post('refresh')
+  @HttpCode(HttpStatus.OK)
+  @ApiOperation({
+    summary: 'Refresh tokens',
+    description: 'Get new access and refresh tokens using the current token',
+  })
+  @ApiResponse({
+    status: 200,
+    description: 'Tokens refreshed successfully',
+    type: LoginResponseDto,
+  })
+  @ApiResponse({
+    status: 401,
+    description: 'Token is invalid or expired',
+    type: ErrorResponse,
+  })
+  async refresh(@Req() request: { user: JwtPayload }) {
+    const result = await this.authService.refresh(request.user);
     const response = new LoginResponseDto();
     response.data = result;
     return response;

@@ -1,4 +1,4 @@
-import { Injectable, Inject } from '@nestjs/common';
+import { Injectable, Inject, UnauthorizedException } from '@nestjs/common';
 import { JwtService } from '@nestjs/jwt';
 import { ConfigService } from '@nestjs/config';
 import { JwtPayload } from 'src/infrastructure/jwt/jwt.strategy';
@@ -26,6 +26,14 @@ export class AuthService {
 
     if (!isMatch) throw new Error('Invalid credentials');
 
+    return this.generateTokens(user);
+  }
+
+  async refresh(
+    payload: JwtPayload,
+  ): Promise<{ accessToken: string; refreshToken: string }> {
+    const user = await this.userService.findById(payload.id);
+    if (!user) throw new UnauthorizedException('User not found');
     return this.generateTokens(user);
   }
 
