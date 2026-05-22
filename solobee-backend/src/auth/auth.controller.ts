@@ -6,6 +6,7 @@ import {
   HttpStatus,
   Req,
   UseGuards,
+  SetMetadata,
 } from '@nestjs/common';
 import { AuthService } from './auth.service';
 import { ErrorResponse } from 'src/core/utils/base-response';
@@ -20,7 +21,10 @@ import {
   ApiBearerAuth,
 } from '@nestjs/swagger';
 import { JwtPayload } from 'src/infrastructure/jwt/jwt.strategy';
-import { JwtRefreshGuard } from 'src/infrastructure/jwt/jwt-auth.guard';
+import {
+  JwtRefreshGuard,
+  IS_REFRESH_KEY,
+} from 'src/infrastructure/jwt/jwt-auth.guard';
 
 @ApiTags('Auth')
 @ApiExtraModels(LoginResponseDto, ErrorResponse)
@@ -52,6 +56,7 @@ export class AuthController {
     return response;
   }
 
+  @SetMetadata(IS_REFRESH_KEY, true)
   @ApiBearerAuth()
   @UseGuards(JwtRefreshGuard)
   @Post('refresh')

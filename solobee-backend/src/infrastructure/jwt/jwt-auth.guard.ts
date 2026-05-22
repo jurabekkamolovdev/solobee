@@ -3,6 +3,8 @@ import { Reflector } from '@nestjs/core';
 import { AuthGuard } from '@nestjs/passport';
 import { IS_PUBLIC_KEY } from 'src/core/decorators/public.decorator';
 
+export const IS_REFRESH_KEY = 'isRefresh';
+
 @Injectable()
 export class JwtAuthGuard extends AuthGuard('jwt') {
   constructor(private reflector: Reflector) {
@@ -16,6 +18,12 @@ export class JwtAuthGuard extends AuthGuard('jwt') {
     ]);
 
     if (isPublic) return true;
+
+    const isRefresh = this.reflector.getAllAndOverride<boolean>(
+      IS_REFRESH_KEY,
+      [context.getHandler(), context.getClass()],
+    );
+    if (isRefresh) return true;
 
     // const request = context.switchToHttp().getRequest();
     // console.log('AUTH HEADER:', request.headers.authorization);
