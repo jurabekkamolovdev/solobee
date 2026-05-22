@@ -5,6 +5,7 @@ import {
   HttpCode,
   HttpStatus,
   Req,
+  UseGuards,
 } from '@nestjs/common';
 import { AuthService } from './auth.service';
 import { ErrorResponse } from 'src/core/utils/base-response';
@@ -18,9 +19,8 @@ import {
   ApiExtraModels,
   ApiBearerAuth,
 } from '@nestjs/swagger';
-import { Roles } from 'src/core/decorators/roles.decorator';
-import { Role } from 'src/core/utils/role.enum';
 import { JwtPayload } from 'src/infrastructure/jwt/jwt.strategy';
+import { JwtRefreshGuard } from 'src/infrastructure/jwt/jwt-auth.guard';
 
 @ApiTags('Auth')
 @ApiExtraModels(LoginResponseDto, ErrorResponse)
@@ -53,7 +53,7 @@ export class AuthController {
   }
 
   @ApiBearerAuth()
-  @Roles(Role.STUDENT)
+  @UseGuards(JwtRefreshGuard)
   @Post('refresh')
   @HttpCode(HttpStatus.OK)
   @ApiOperation({
