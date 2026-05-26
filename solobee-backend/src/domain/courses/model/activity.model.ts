@@ -167,7 +167,10 @@ export interface WritingTracePayload {
 export interface WritingSpellPayload {
   mode: 'spell';
   answer: string;
-  shuffledLetters: string[];
+  options: {
+    imageKey: string;
+    char: string;
+  }[];
 }
 
 export type WritingPayload = WritingTracePayload | WritingSpellPayload;
