@@ -257,63 +257,224 @@ function LearnEditor({ activity, onSave, onDelete, saving }: EditorProps) {
   );
 }
 
+// function WritingEditor({ activity, onSave, onDelete, saving }: EditorProps) {
+//   const [mode, setMode] = useState<'trace' | 'spell'>(activity?.payload?.mode ?? 'trace');
+//   const [answer, setAnswer] = useState(activity?.payload?.answer ?? '');
+//   const [shuffled, setShuffled] = useState<string[]>(activity?.payload?.shuffledLetters ?? []);
+
+//   const autoShuffle = () => {
+//     const letters = answer.toUpperCase().split('');
+//     const extra = 'ABCDEFGHIJKLMNOPQRSTUVWXYZ'.split('').filter(l => !letters.includes(l)).slice(0, 10 - letters.length);
+//     setShuffled([...letters, ...extra].sort(() => Math.random() - 0.5));
+//   };
+
+//   const handleSave = () => {
+//     if (mode === 'trace') {
+//       onSave({ mode: 'trace' });
+//     } else {
+//       if (!answer.trim()) return alert('Answer kiritilishi shart');
+//       onSave({ mode: 'spell', answer: answer.toUpperCase(), shuffledLetters: shuffled });
+//     }
+//   };
+
+//   return (
+//     <div className="space-y-4 max-w-lg">
+//       <div className="flex gap-3">
+//         {(['trace', 'spell'] as const).map(m => (
+//           <button
+//             key={m}
+//             onClick={() => setMode(m)}
+//             className={`px-4 py-2 rounded-lg text-sm font-medium transition ${mode === m ? 'bg-primary-600 text-white' : 'bg-gray-100 text-gray-600 hover:bg-gray-200'}`}
+//           >
+//             {m === 'trace' ? 'Trace (harf chizish)' : 'Spell (so\'z yig\'ish)'}
+//           </button>
+//         ))}
+//       </div>
+
+//       {mode === 'spell' && (
+//         <div className="space-y-3">
+//           <div>
+//             <label className="block text-sm font-medium text-gray-700">To'g'ri javob</label>
+//             <input
+//               type="text"
+//               value={answer}
+//               onChange={e => setAnswer(e.target.value.toUpperCase())}
+//               className="mt-1 block w-full p-2 border rounded-lg focus:outline-none focus:ring-2 focus:ring-primary-500 uppercase"
+//               placeholder="BANANA"
+//             />
+//           </div>
+//           <div>
+//             <div className="flex items-center justify-between mb-1">
+//               <label className="block text-sm font-medium text-gray-700">Aralashtirilgan harflar</label>
+//               <button onClick={autoShuffle} className="text-xs text-primary-600 hover:underline">Auto-generate</button>
+//             </div>
+//             <div className="flex flex-wrap gap-2">
+//               {shuffled.map((l, i) => (
+//                 <span key={i} className="px-3 py-1 bg-gray-100 rounded-lg text-sm font-mono font-medium">{l}</span>
+//               ))}
+//             </div>
+//             {shuffled.length === 0 && <p className="text-xs text-gray-400 mt-1">Javobni kiriting va "Auto-generate" bosing</p>}
+//           </div>
+//         </div>
+//       )}
+
+//       <EditorFooter activity={activity} onSave={handleSave} onDelete={onDelete} saving={saving} />
+//     </div>
+//   );
+// }
+
+// Yangi tip
+interface SpellOption {
+  char: string;
+  imageUrl: string | null;
+  newImageKey?: string;
+  uploading?: boolean;
+}
+
 function WritingEditor({ activity, onSave, onDelete, saving }: EditorProps) {
   const [mode, setMode] = useState<'trace' | 'spell'>(activity?.payload?.mode ?? 'trace');
   const [answer, setAnswer] = useState(activity?.payload?.answer ?? '');
-  const [shuffled, setShuffled] = useState<string[]>(activity?.payload?.shuffledLetters ?? []);
+  const [spellOptions, setSpellOptions] = useState<SpellOption[]>(
+    activity?.payload?.options?.map((o: any) => ({
+      char: o.char ?? '',
+      imageUrl: o.imageUrl ?? null,
+    })) ?? []
+  );
 
-  const autoShuffle = () => {
-    const letters = answer.toUpperCase().split('');
-    const extra = 'ABCDEFGHIJKLMNOPQRSTUVWXYZ'.split('').filter(l => !letters.includes(l)).slice(0, 10 - letters.length);
-    setShuffled([...letters, ...extra].sort(() => Math.random() - 0.5));
-  };
+  const addOption = () =>
+    setSpellOptions(prev => [...prev, { char: '', imageUrl: null }]);
 
-  const handleSave = () => {
-    if (mode === 'trace') {
-      onSave({ mode: 'trace' });
-    } else {
-      if (!answer.trim()) return alert('Answer kiritilishi shart');
-      onSave({ mode: 'spell', answer: answer.toUpperCase(), shuffledLetters: shuffled });
+  const removeOption = (idx: number) =>
+    setSpellOptions(prev => prev.filter((_, i) => i !== idx));
+
+  const updateOption = (idx: number, patch: Partial<SpellOption>) =>
+    setSpellOptions(prev => prev.map((o, i) => i === idx ? { ...o, ...patch } : o));
+
+  const handleImageUpload = async (idx: number, file: File) => {
+    updateOption(idx, { uploading: true });
+    try {
+      const { fileKey, publicUrl } = await coursesApi.uploadFileToS3(file, 'writing');
+      updateOption(idx, { newImageKey: fileKey, imageUrl: publicUrl });
+    } catch {
+      alert('Rasm yuklashda xatolik');
+    } finally {
+      updateOption(idx, { uploading: false });
     }
   };
 
+  const handleSave = () => {
+    if (mode === 'trace') { onSave({ mode: 'trace' }); return; }
+    if (!answer.trim()) return alert('Answer kiritilishi shart');
+    if (spellOptions.length === 0) return alert('Kamida 1 ta option qo\'shilishi shart');
+    if (spellOptions.some(o => !o.char.trim())) return alert('Barcha harflar kiritilishi shart');
+    if (spellOptions.some(o => !o.imageUrl)) return alert('Barcha rasmlar yuklanishi shart');
+
+    onSave({
+      mode: 'spell',
+      answer: answer.toUpperCase(),
+      options: spellOptions.map(o => ({
+        char: o.char.toUpperCase(),
+        ...(o.newImageKey ? { imageKey: o.newImageKey } : {}),
+      })),
+    });
+  };
+
   return (
-    <div className="space-y-4 max-w-lg">
+    <div className="space-y-4 max-w-2xl">
+      {/* Mode toggle */}
       <div className="flex gap-3">
         {(['trace', 'spell'] as const).map(m => (
           <button
             key={m}
             onClick={() => setMode(m)}
-            className={`px-4 py-2 rounded-lg text-sm font-medium transition ${mode === m ? 'bg-primary-600 text-white' : 'bg-gray-100 text-gray-600 hover:bg-gray-200'}`}
+            className={`px-4 py-2 rounded-lg text-sm font-medium transition ${
+              mode === m ? 'bg-primary-600 text-white' : 'bg-gray-100 text-gray-600 hover:bg-gray-200'
+            }`}
           >
-            {m === 'trace' ? 'Trace (harf chizish)' : 'Spell (so\'z yig\'ish)'}
+            {m === 'trace' ? 'Trace (harf chizish)' : "Spell (so'z yig'ish)"}
           </button>
         ))}
       </div>
 
       {mode === 'spell' && (
-        <div className="space-y-3">
+        <div className="space-y-4">
+          {/* To'g'ri javob */}
           <div>
-            <label className="block text-sm font-medium text-gray-700">To'g'ri javob</label>
+            <label className="block text-sm font-medium text-gray-700">To'g'ri javob (so'z)</label>
             <input
               type="text"
               value={answer}
               onChange={e => setAnswer(e.target.value.toUpperCase())}
-              className="mt-1 block w-full p-2 border rounded-lg focus:outline-none focus:ring-2 focus:ring-primary-500 uppercase"
+              className="mt-1 block w-full p-2 border rounded-lg focus:outline-none focus:ring-2 focus:ring-primary-500 uppercase tracking-widest font-mono"
               placeholder="BANANA"
             />
           </div>
+
+          {/* Options */}
           <div>
-            <div className="flex items-center justify-between mb-1">
-              <label className="block text-sm font-medium text-gray-700">Aralashtirilgan harflar</label>
-              <button onClick={autoShuffle} className="text-xs text-primary-600 hover:underline">Auto-generate</button>
+            <div className="flex items-center justify-between mb-2">
+              <label className="block text-sm font-medium text-gray-700">
+                Variantlar
+                <span className="ml-2 text-xs text-gray-400 font-normal">(bola uchun aralashtiriladi)</span>
+              </label>
+              <span className="text-xs text-gray-400">{spellOptions.length} ta</span>
             </div>
-            <div className="flex flex-wrap gap-2">
-              {shuffled.map((l, i) => (
-                <span key={i} className="px-3 py-1 bg-gray-100 rounded-lg text-sm font-mono font-medium">{l}</span>
+
+            <div className="grid grid-cols-2 sm:grid-cols-3 md:grid-cols-4 gap-3">
+              {spellOptions.map((opt, idx) => (
+                <div key={idx} className="rounded-xl border border-gray-200 p-2 space-y-2">
+                  {/* Rasm */}
+                  <div className="relative aspect-square rounded-lg overflow-hidden bg-gray-50 flex items-center justify-center border">
+                    {opt.uploading ? (
+                      <Loader2 className="w-5 h-5 animate-spin text-primary-600" />
+                    ) : opt.imageUrl ? (
+                      <>
+                        <img src={opt.imageUrl} className="w-full h-full object-cover" alt={opt.char} />
+                        <label className="absolute inset-0 bg-black/40 opacity-0 hover:opacity-100 transition flex items-center justify-center cursor-pointer">
+                          <ImageIcon className="w-5 h-5 text-white" />
+                          <input type="file" className="sr-only" accept="image/*"
+                            onChange={e => e.target.files?.[0] && handleImageUpload(idx, e.target.files[0])} />
+                        </label>
+                      </>
+                    ) : (
+                      <label className="absolute inset-0 flex flex-col items-center justify-center cursor-pointer hover:bg-gray-100 transition">
+                        <ImageIcon className="w-5 h-5 text-gray-400" />
+                        <span className="text-xs text-gray-400 mt-1">Rasm</span>
+                        <input type="file" className="sr-only" accept="image/*"
+                          onChange={e => e.target.files?.[0] && handleImageUpload(idx, e.target.files[0])} />
+                      </label>
+                    )}
+                  </div>
+
+                  {/* Harf input */}
+                  <input
+                    type="text"
+                    value={opt.char}
+                    maxLength={1}
+                    onChange={e => updateOption(idx, { char: e.target.value.toUpperCase() })}
+                    placeholder="A"
+                    className="w-full p-1.5 text-center text-lg font-bold font-mono border rounded-lg focus:outline-none focus:ring-2 focus:ring-primary-500 uppercase"
+                  />
+
+                  {/* O'chirish */}
+                  <button
+                    onClick={() => removeOption(idx)}
+                    className="w-full text-xs text-red-400 hover:text-red-600 transition py-0.5"
+                  >
+                    O'chirish
+                  </button>
+                </div>
               ))}
+
+              {/* + Qo'shish */}
+              <button
+                onClick={addOption}
+                className="aspect-square rounded-xl border-2 border-dashed border-gray-200 flex flex-col items-center justify-center text-gray-400 hover:border-primary-400 hover:text-primary-600 transition"
+              >
+                <Plus className="w-6 h-6" />
+                <span className="text-xs mt-1">Qo'shish</span>
+              </button>
             </div>
-            {shuffled.length === 0 && <p className="text-xs text-gray-400 mt-1">Javobni kiriting va "Auto-generate" bosing</p>}
           </div>
         </div>
       )}
