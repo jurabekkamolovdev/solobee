@@ -113,13 +113,22 @@ export class StudentController {
     return new ObjectResponse(result);
   }
 
+  @ApiBearerAuth()
   @Roles(Role.STUDENT)
   @Delete()
   @ApiOperation({ summary: 'Delete a student' })
-  @ApiResponse({ status: 200, description: 'Student deleted' })
-  async deleteStudent(@Req() request: { student: JwtPayload }) {
-    const kindergartenId: string = request.student.kindergartenId;
-    const id: string = request.student.id;
+  @ApiResponse({
+    status: 200,
+    description: 'Student account deleted successfully',
+    type: ObjectResponse,
+  })
+  @ApiResponse({
+    status: 404,
+    description: 'Student not found',
+  })
+  async deleteStudent(@Req() request: { user: JwtPayload }) {
+    const kindergartenId: string = request.user.kindergartenId;
+    const id: string = request.user.id;
 
     const result: boolean = await this.studentService.delete(
       kindergartenId,

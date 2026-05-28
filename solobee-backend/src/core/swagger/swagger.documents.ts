@@ -5,6 +5,7 @@ const MOBILE_ALLOWED_OPS: Array<[string, string]> = [
   ['post', '/auth/login'],
   ['post', '/auth/refresh'],
   ['get', '/students/profile'],
+  ['delete', '/students'],
   ['get', '/courses/categories'],
   ['get', '/courses/categories/{categoryId}/subcategories'],
   ['get', '/courses/subcategories/{subCategoryId}/topics'],
