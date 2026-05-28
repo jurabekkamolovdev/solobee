@@ -114,6 +114,21 @@ export class StudentController {
   }
 
   @Roles(Role.STUDENT)
+  @Delete()
+  @ApiOperation({ summary: 'Delete a student' })
+  @ApiResponse({ status: 200, description: 'Student deleted' })
+  async deleteStudent(@Req() request: { student: JwtPayload }) {
+    const kindergartenId: string = request.student.kindergartenId;
+    const id: string = request.student.id;
+
+    const result: boolean = await this.studentService.delete(
+      kindergartenId,
+      id,
+    );
+    return new ObjectResponse(result);
+  }
+
+  @Roles(Role.STUDENT)
   @Get('profile')
   @ApiOperation({ summary: 'Get current student profile' })
   @ApiResponse({
