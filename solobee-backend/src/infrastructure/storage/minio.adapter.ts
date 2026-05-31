@@ -19,9 +19,9 @@ import sharp from 'sharp';
 @Injectable()
 export class MinioAdapter implements IStorageService, OnModuleInit {
   private readonly s3Client: S3Client;
-  private readonly signingS3Client: S3Client;
   private readonly bucketName: string;
   private readonly publicEndpoint: string;
+  private readonly internalEndpoint: string;
   private readonly logger = new Logger(MinioAdapter.name);
 
   constructor(private readonly configService: ConfigService) {
@@ -29,6 +29,7 @@ export class MinioAdapter implements IStorageService, OnModuleInit {
 
     this.bucketName = cfg.bucketName;
     this.publicEndpoint = cfg.publicEndpoint;
+    this.internalEndpoint = cfg.endpoint;
 
     const base = {
       credentials: {
@@ -40,10 +41,6 @@ export class MinioAdapter implements IStorageService, OnModuleInit {
     };
 
     this.s3Client = new S3Client({ ...base, endpoint: cfg.endpoint });
-    this.signingS3Client = new S3Client({
-      ...base,
-      endpoint: cfg.publicEndpoint,
-    });
   }
 
   async onModuleInit() {
@@ -126,9 +123,18 @@ export class MinioAdapter implements IStorageService, OnModuleInit {
       Key: objectKey,
       ContentType: contentType,
     });
-    const presignedUrl = await getSignedUrl(this.signingS3Client, command, {
+
+    // ichki s3Client bilan imzola
+    const internalPresignedUrl = await getSignedUrl(this.s3Client, command, {
       expiresIn: 300,
     });
+
+    // ichki URL ni public URL ga almashtir
+    const presignedUrl = internalPresignedUrl.replace(
+      this.internalEndpoint,
+      this.publicEndpoint,
+    );
+
     return {
       presignedUrl,
       fileKey: objectKey,
@@ -166,10 +172,10 @@ export class MinioAdapter implements IStorageService, OnModuleInit {
         Bucket: this.bucketName,
         Key: fileKey,
       });
-      const url: string = await getSignedUrl(this.signingS3Client, command, {
+      const internalUrl = await getSignedUrl(this.s3Client, command, {
         expiresIn: 18000,
       });
-      return url;
+      return internalUrl.replace(this.internalEndpoint, this.publicEndpoint);
     } catch (error) {
       this.logger.error(`Presigned download URL xatosi: ${fileKey}`, error);
       return null;
