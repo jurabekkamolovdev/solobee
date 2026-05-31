@@ -131,26 +131,19 @@ export const coursesApi = {
   //   if (!response.ok) throw new Error('Upload to S3 failed');
   //   return { fileKey, publicUrl };
   // },
-
   uploadFileToS3: async (file: File, folder: string = 'categories') => {
-  console.log('file.type:', file.type);
-  console.log('file.name:', file.name);
-  
-  const { presignedUrl, fileKey, publicUrl } = await coursesApi.getPresignedUrl(
-    folder,
-    file.name,
-    file.type,
-  );
-  
-  console.log('presignedUrl:', presignedUrl);
-  
-  const response = await fetch(presignedUrl, {
-    method: 'PUT',
-    body: file,
-    headers: { 'Content-Type': file.type },
-  });
-  
-  console.log('PUT response status:', response.status);
-  return { fileKey, publicUrl };
-},
+    const { presignedUrl, fileKey, publicUrl } = await coursesApi.getPresignedUrl(
+      folder,
+      file.name,
+      file.type,
+    );
+    const response = await fetch(presignedUrl, {
+      method: 'PUT',
+      body: file,
+      // headers olib tashlandi
+    });
+    console.log('PUT response status:', response.status);
+    if (!response.ok) throw new Error('Upload to S3 failed');
+    return { fileKey, publicUrl };
+  },
 };
