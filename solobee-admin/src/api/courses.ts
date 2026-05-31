@@ -117,18 +117,40 @@ export const coursesApi = {
       { folder, fileName, contentType },
     ),
 
+  // uploadFileToS3: async (file: File, folder: string = 'categories') => {
+  //   const { presignedUrl, fileKey, publicUrl } = await coursesApi.getPresignedUrl(
+  //     folder,
+  //     file.name,
+  //     file.type,
+  //   );
+  //   const response = await fetch(presignedUrl, {
+  //     method: 'PUT',
+  //     body: file,
+  //     headers: { 'Content-Type': file.type },
+  //   });
+  //   if (!response.ok) throw new Error('Upload to S3 failed');
+  //   return { fileKey, publicUrl };
+  // },
+
   uploadFileToS3: async (file: File, folder: string = 'categories') => {
-    const { presignedUrl, fileKey, publicUrl } = await coursesApi.getPresignedUrl(
-      folder,
-      file.name,
-      file.type,
-    );
-    const response = await fetch(presignedUrl, {
-      method: 'PUT',
-      body: file,
-      headers: { 'Content-Type': file.type },
-    });
-    if (!response.ok) throw new Error('Upload to S3 failed');
-    return { fileKey, publicUrl };
-  },
+  console.log('file.type:', file.type);
+  console.log('file.name:', file.name);
+  
+  const { presignedUrl, fileKey, publicUrl } = await coursesApi.getPresignedUrl(
+    folder,
+    file.name,
+    file.type,
+  );
+  
+  console.log('presignedUrl:', presignedUrl);
+  
+  const response = await fetch(presignedUrl, {
+    method: 'PUT',
+    body: file,
+    headers: { 'Content-Type': file.type },
+  });
+  
+  console.log('PUT response status:', response.status);
+  return { fileKey, publicUrl };
+},
 };
