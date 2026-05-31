@@ -140,7 +140,7 @@ export const coursesApi = {
     const response = await fetch(presignedUrl, {
       method: 'PUT',
       body: file,
-      // headers olib tashlandi
+      headers: { 'Content-Type': file.type },
     });
     console.log('PUT response status:', response.status);
     if (!response.ok) throw new Error('Upload to S3 failed');
