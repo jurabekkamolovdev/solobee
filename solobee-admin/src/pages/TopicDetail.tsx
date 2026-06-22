@@ -257,73 +257,6 @@ function LearnEditor({ activity, onSave, onDelete, saving }: EditorProps) {
   );
 }
 
-// function WritingEditor({ activity, onSave, onDelete, saving }: EditorProps) {
-//   const [mode, setMode] = useState<'trace' | 'spell'>(activity?.payload?.mode ?? 'trace');
-//   const [answer, setAnswer] = useState(activity?.payload?.answer ?? '');
-//   const [shuffled, setShuffled] = useState<string[]>(activity?.payload?.shuffledLetters ?? []);
-
-//   const autoShuffle = () => {
-//     const letters = answer.toUpperCase().split('');
-//     const extra = 'ABCDEFGHIJKLMNOPQRSTUVWXYZ'.split('').filter(l => !letters.includes(l)).slice(0, 10 - letters.length);
-//     setShuffled([...letters, ...extra].sort(() => Math.random() - 0.5));
-//   };
-
-//   const handleSave = () => {
-//     if (mode === 'trace') {
-//       onSave({ mode: 'trace' });
-//     } else {
-//       if (!answer.trim()) return alert('Answer kiritilishi shart');
-//       onSave({ mode: 'spell', answer: answer.toUpperCase(), shuffledLetters: shuffled });
-//     }
-//   };
-
-//   return (
-//     <div className="space-y-4 max-w-lg">
-//       <div className="flex gap-3">
-//         {(['trace', 'spell'] as const).map(m => (
-//           <button
-//             key={m}
-//             onClick={() => setMode(m)}
-//             className={`px-4 py-2 rounded-lg text-sm font-medium transition ${mode === m ? 'bg-primary-600 text-white' : 'bg-gray-100 text-gray-600 hover:bg-gray-200'}`}
-//           >
-//             {m === 'trace' ? 'Trace (harf chizish)' : 'Spell (so\'z yig\'ish)'}
-//           </button>
-//         ))}
-//       </div>
-
-//       {mode === 'spell' && (
-//         <div className="space-y-3">
-//           <div>
-//             <label className="block text-sm font-medium text-gray-700">To'g'ri javob</label>
-//             <input
-//               type="text"
-//               value={answer}
-//               onChange={e => setAnswer(e.target.value.toUpperCase())}
-//               className="mt-1 block w-full p-2 border rounded-lg focus:outline-none focus:ring-2 focus:ring-primary-500 uppercase"
-//               placeholder="BANANA"
-//             />
-//           </div>
-//           <div>
-//             <div className="flex items-center justify-between mb-1">
-//               <label className="block text-sm font-medium text-gray-700">Aralashtirilgan harflar</label>
-//               <button onClick={autoShuffle} className="text-xs text-primary-600 hover:underline">Auto-generate</button>
-//             </div>
-//             <div className="flex flex-wrap gap-2">
-//               {shuffled.map((l, i) => (
-//                 <span key={i} className="px-3 py-1 bg-gray-100 rounded-lg text-sm font-mono font-medium">{l}</span>
-//               ))}
-//             </div>
-//             {shuffled.length === 0 && <p className="text-xs text-gray-400 mt-1">Javobni kiriting va "Auto-generate" bosing</p>}
-//           </div>
-//         </div>
-//       )}
-
-//       <EditorFooter activity={activity} onSave={handleSave} onDelete={onDelete} saving={saving} />
-//     </div>
-//   );
-// }
-
-// Yangi tip
 interface SpellOption {
   char: string;
   imageUrl: string | null;
@@ -334,6 +267,9 @@ interface SpellOption {
 function WritingEditor({ activity, onSave, onDelete, saving }: EditorProps) {
   const [mode, setMode] = useState<'trace' | 'spell'>(activity?.payload?.mode ?? 'trace');
   const [answer, setAnswer] = useState(activity?.payload?.answer ?? '');
+  const [audioUrl, setAudioUrl] = useState<string | null>(activity?.payload?.audioUrl ?? null);
+  const [newAudioKey, setNewAudioKey] = useState<string | null | undefined>(undefined);
+  const [uploadingAudio, setUploadingAudio] = useState(false);
   const [spellOptions, setSpellOptions] = useState<SpellOption[]>(
     activity?.payload?.options?.map((o: any) => ({
       char: o.char ?? '',
@@ -362,6 +298,19 @@ function WritingEditor({ activity, onSave, onDelete, saving }: EditorProps) {
     }
   };
 
+  const handleAudioUpload = async (file: File) => {
+    setUploadingAudio(true);
+    try {
+      const { fileKey, publicUrl } = await coursesApi.uploadFileToS3(file, 'writing');
+      setNewAudioKey(fileKey);
+      setAudioUrl(publicUrl);
+    } catch {
+      alert('Audio yuklashda xatolik');
+    } finally {
+      setUploadingAudio(false);
+    }
+  };
+
   const handleSave = () => {
     if (mode === 'trace') { onSave({ mode: 'trace' }); return; }
     if (!answer.trim()) return alert('Answer kiritilishi shart');
@@ -372,6 +321,7 @@ function WritingEditor({ activity, onSave, onDelete, saving }: EditorProps) {
     onSave({
       mode: 'spell',
       answer: answer.toUpperCase(),
+      ...(newAudioKey !== undefined ? { audioKey: newAudioKey } : {}),
       options: spellOptions.map(o => ({
         char: o.char.toUpperCase(),
         ...(o.newImageKey ? { imageKey: o.newImageKey } : {}),
@@ -410,6 +360,17 @@ function WritingEditor({ activity, onSave, onDelete, saving }: EditorProps) {
             />
           </div>
 
+          {/* Audio */}
+          <div>
+            <label className="block text-sm font-medium text-gray-700 mb-2">Audio</label>
+            <AudioPicker
+              audioUrl={audioUrl ?? ''}
+              uploading={uploadingAudio}
+              onPick={handleAudioUpload}
+              onClear={() => { setNewAudioKey(null); setAudioUrl(null); }}
+            />
+          </div>
+
           {/* Options */}
           <div>
             <div className="flex items-center justify-between mb-2">
@@ -423,7 +384,6 @@ function WritingEditor({ activity, onSave, onDelete, saving }: EditorProps) {
             <div className="grid grid-cols-2 sm:grid-cols-3 md:grid-cols-4 gap-3">
               {spellOptions.map((opt, idx) => (
                 <div key={idx} className="rounded-xl border border-gray-200 p-2 space-y-2">
-                  {/* Rasm */}
                   <div className="relative aspect-square rounded-lg overflow-hidden bg-gray-50 flex items-center justify-center border">
                     {opt.uploading ? (
                       <Loader2 className="w-5 h-5 animate-spin text-primary-600" />
@@ -445,8 +405,6 @@ function WritingEditor({ activity, onSave, onDelete, saving }: EditorProps) {
                       </label>
                     )}
                   </div>
-
-                  {/* Harf input */}
                   <input
                     type="text"
                     value={opt.char}
@@ -455,8 +413,6 @@ function WritingEditor({ activity, onSave, onDelete, saving }: EditorProps) {
                     placeholder="A"
                     className="w-full p-1.5 text-center text-lg font-bold font-mono border rounded-lg focus:outline-none focus:ring-2 focus:ring-primary-500 uppercase"
                   />
-
-                  {/* O'chirish */}
                   <button
                     onClick={() => removeOption(idx)}
                     className="w-full text-xs text-red-400 hover:text-red-600 transition py-0.5"
@@ -466,7 +422,6 @@ function WritingEditor({ activity, onSave, onDelete, saving }: EditorProps) {
                 </div>
               ))}
 
-              {/* + Qo'shish */}
               <button
                 onClick={addOption}
                 className="aspect-square rounded-xl border-2 border-dashed border-gray-200 flex flex-col items-center justify-center text-gray-400 hover:border-primary-400 hover:text-primary-600 transition"
@@ -494,157 +449,6 @@ type WordhuntOption = {
   uploadingAudio?: boolean;
 };
 
-// function WordhuntEditor({ activity, onSave, onDelete, saving }: EditorProps) {
-//   const [options, setOptions] = useState<WordhuntOption[]>(
-//     activity?.payload?.options?.map((o: any) => ({
-//       imageUrl: o.imageUrl ?? null,
-//       audioUrl: o.audioUrl ?? null,
-//       isCorrect: o.isCorrect,
-//     })) ??
-//     [
-//       { imageUrl: null, audioUrl: null, isCorrect: true },
-//       { imageUrl: null, audioUrl: null, isCorrect: false },
-//       { imageUrl: null, audioUrl: null, isCorrect: false },
-//       { imageUrl: null, audioUrl: null, isCorrect: false },
-//     ]
-//   );
-//   const [imageUrl, setImageUrl] = useState<string | null>(activity?.payload?.imageUrl ?? null);
-//   const [newImageKey, setNewImageKey] = useState<string | null | undefined>();
-//   const [uploadingImage, setUploadingImage] = useState(false);
-
-//   const setCorrect = (idx: number) => setOptions(prev => prev.map((o, i) => ({ ...o, isCorrect: i === idx })));
-//   const update = (idx: number, patch: Partial<WordhuntOption>) =>
-//     setOptions(prev => prev.map((o, i) => i === idx ? { ...o, ...patch } : o));
-
-//   const handleOptionImageUpload = async (idx: number, file: File) => {
-//     update(idx, { uploadingImage: true });
-//     try {
-//       const { fileKey, publicUrl } = await coursesApi.uploadFileToS3(file, 'wordhunt');
-//       update(idx, { newImageKey: fileKey, imageUrl: publicUrl });
-//     } catch {
-//       alert('Rasm yuklashda xatolik');
-//     } finally {
-//       update(idx, { uploadingImage: false });
-//     }
-//   };
-
-//   const handleOptionAudioUpload = async (idx: number, file: File) => {
-//     update(idx, { uploadingAudio: true });
-//     try {
-//       const { fileKey, publicUrl } = await coursesApi.uploadFileToS3(file, 'wordhunt');
-//       update(idx, { newAudioKey: fileKey, audioUrl: publicUrl });
-//     } catch {
-//       alert('Audio yuklashda xatolik');
-//     } finally {
-//       update(idx, { uploadingAudio: false });
-//     }
-//   };
-
-//   const handleImageUpload = async (file: File) => {
-//     setUploadingImage(true);
-//     try {
-//       const { fileKey, publicUrl } = await coursesApi.uploadFileToS3(file, 'wordhunt');
-//       setNewImageKey(fileKey);
-//       setImageUrl(publicUrl);
-//     } catch {
-//       alert('Rasm yuklashda xatolik');
-//     } finally {
-//       setUploadingImage(false);
-//     }
-//   };
-
-//   const handleSave = () => {
-//     if (options.some(o => !o.imageUrl)) return alert('Barcha variant rasmlari yuklanishi shart');
-//     if (!options.some(o => o.isCorrect)) return alert('Kamida 1 ta to\'g\'ri javob belgilanishi shart');
-//     onSave({
-//       ...(newImageKey !== undefined ? { imageKey: newImageKey } : {}),
-//       options: options.map(o => ({
-//         isCorrect: o.isCorrect,
-//         ...(o.newImageKey ? { imageKey: o.newImageKey } : {}),
-//         ...(o.newAudioKey !== undefined ? { audioKey: o.newAudioKey } : {}),
-//       })),
-//     });
-//   };
-
-//   return (
-//     <div className="space-y-4">
-//       <p className="text-sm text-gray-500">Tepadagi rasm — o'quvchi topishi kerak bo'lgan harf. Har bir variant to'liq tayyorlangan rasm sifatida yuklanadi (gradient, fon rangi, matn allaqachon chizilgan). Ixtiyoriy audio biriktirish mumkin.</p>
-
-//       <div className="max-w-xs">
-//         <label className="block text-sm font-medium text-gray-700 mb-2">Topiladigan harf (rasm)</label>
-//         <div className="relative aspect-square rounded-xl overflow-hidden bg-gray-50 border flex items-center justify-center">
-//           {uploadingImage ? (
-//             <Loader2 className="w-6 h-6 animate-spin text-primary-600" />
-//           ) : imageUrl ? (
-//             <>
-//               <img src={imageUrl} className="w-full h-full object-cover" />
-//               <label className="absolute inset-0 bg-black/40 opacity-0 hover:opacity-100 transition flex items-center justify-center cursor-pointer">
-//                 <ImageIcon className="w-6 h-6 text-white" />
-//                 <input type="file" className="sr-only" accept="image/*" onChange={e => e.target.files?.[0] && handleImageUpload(e.target.files[0])} />
-//               </label>
-//             </>
-//           ) : (
-//             <label className="absolute inset-0 flex flex-col items-center justify-center cursor-pointer hover:bg-gray-100 transition">
-//               <ImageIcon className="w-6 h-6 text-gray-400" />
-//               <span className="text-xs text-gray-400 mt-1">Rasm yuklash</span>
-//               <input type="file" className="sr-only" accept="image/*" onChange={e => e.target.files?.[0] && handleImageUpload(e.target.files[0])} />
-//             </label>
-//           )}
-//         </div>
-//       </div>
-
-//       <div className="grid grid-cols-2 md:grid-cols-4 gap-4">
-//         {options.map((opt, idx) => (
-//           <div key={idx} className={`rounded-xl border p-3 space-y-2 ${opt.isCorrect ? 'border-green-300 bg-green-50' : 'border-gray-100'}`}>
-//             <div className="relative aspect-square rounded-lg overflow-hidden bg-gray-50 flex items-center justify-center border">
-//               {opt.uploadingImage ? (
-//                 <Loader2 className="w-6 h-6 animate-spin text-primary-600" />
-//               ) : opt.imageUrl ? (
-//                 <>
-//                   <img src={opt.imageUrl} className="w-full h-full object-cover" />
-//                   <label className="absolute inset-0 bg-black/40 opacity-0 hover:opacity-100 transition flex items-center justify-center cursor-pointer">
-//                     <ImageIcon className="w-6 h-6 text-white" />
-//                     <input type="file" className="sr-only" accept="image/*" onChange={e => e.target.files?.[0] && handleOptionImageUpload(idx, e.target.files[0])} />
-//                   </label>
-//                 </>
-//               ) : (
-//                 <label className="absolute inset-0 flex flex-col items-center justify-center cursor-pointer hover:bg-gray-100 transition">
-//                   <ImageIcon className="w-6 h-6 text-gray-400" />
-//                   <span className="text-xs text-gray-400 mt-1">Rasm yuklash</span>
-//                   <input type="file" className="sr-only" accept="image/*" onChange={e => e.target.files?.[0] && handleOptionImageUpload(idx, e.target.files[0])} />
-//                 </label>
-//               )}
-//             </div>
-//             <AudioPicker
-//               audioUrl={opt.audioUrl ?? ''}
-//               uploading={!!opt.uploadingAudio}
-//               compact
-//               onPick={file => handleOptionAudioUpload(idx, file)}
-//               onClear={() => update(idx, { newAudioKey: null, audioUrl: null })}
-//             />
-//             <button onClick={() => setCorrect(idx)} className={`w-full flex items-center justify-center gap-1.5 py-1.5 rounded-lg text-xs font-medium transition ${opt.isCorrect ? 'bg-green-500 text-white' : 'bg-gray-100 text-gray-600 hover:bg-gray-200'}`}>
-//               <Check className="w-3 h-3" />
-//               {opt.isCorrect ? 'To\'g\'ri javob' : 'Belgilash'}
-//             </button>
-//             {options.length > 2 && (
-//               <button onClick={() => setOptions(prev => prev.filter((_, i) => i !== idx))} className="w-full text-xs text-red-400 hover:text-red-600 transition">
-//                 O'chirish
-//               </button>
-//             )}
-//           </div>
-//         ))}
-//         <button
-//           onClick={() => setOptions(prev => [...prev, { imageUrl: null, audioUrl: null, isCorrect: false }])}
-//           className="aspect-square rounded-xl border-2 border-dashed border-gray-200 flex flex-col items-center justify-center text-gray-400 hover:border-primary-400 hover:text-primary-600 transition"
-//         >
-//           <Plus className="w-6 h-6" />
-//           <span className="text-xs mt-1">Qo'shish</span>
-//         </button>
-//       </div>
-//       <EditorFooter activity={activity} onSave={handleSave} onDelete={onDelete} saving={saving} />
-//     </div>
-//   );
-// }
 
 function WordhuntEditor({ activity, onSave, onDelete, saving }: EditorProps) {
   const [options, setOptions] = useState<WordhuntOption[]>(

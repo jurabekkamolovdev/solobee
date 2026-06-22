@@ -51,8 +51,16 @@ export class Activity<T extends ActivityType = ActivityType> {
         }
         break;
       }
-      case ActivityType.WRITING:
+      case ActivityType.WRITING: {
+        const p = this.payload as WritingPayload;
+        if (p.mode === 'spell') {
+          if (p.audioKey) keys.push(p.audioKey);
+          for (const opt of p.options ?? []) {
+            if (opt?.imageKey) keys.push(opt.imageKey);
+          }
+        }
         break;
+      }
     }
     return keys;
   }
@@ -88,9 +96,36 @@ export class Activity<T extends ActivityType = ActivityType> {
             }
           : {}),
       };
+    } else if (this.type === ActivityType.WRITING) {
+      const baseWriting = base as WritingPayload;
+      const patchWriting = patch as Partial<WritingPayload>;
+
+      if (baseWriting.mode === 'spell' && patchWriting.mode === 'spell') {
+        const baseSpell = baseWriting as WritingSpellPayload;
+        const patchSpell = patchWriting as Partial<WritingSpellPayload>;
+        const existingOptions = baseSpell.options ?? [];
+        const patchOptions = patchSpell.options;
+
+        this.payload = {
+          ...baseSpell,
+          ...patchSpell,
+          ...(patchOptions
+            ? {
+                options: patchOptions.map((opt, i) => ({
+                  ...(existingOptions[i] ?? {}),
+                  ...opt,
+                })),
+              }
+            : {}),
+        } as PayloadByType<T>;
+      } else {
+        // trace → trace, yoki mode o'zgarishi
+        this.payload = { ...base, ...patch };
+      }
     } else {
       this.payload = { ...base, ...patch };
     }
+
     this.updatedAt = new Date();
   }
 
@@ -171,6 +206,7 @@ export interface WritingSpellPayload {
     imageKey: string;
     char: string;
   }[];
+  audioKey?: string;
 }
 
 export type WritingPayload = WritingTracePayload | WritingSpellPayload;

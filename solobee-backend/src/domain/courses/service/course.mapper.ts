@@ -6,6 +6,8 @@ import {
   Activity,
   ActivityType,
   LearnPayload,
+  WritingPayload,
+  WritingSpellPayload,
   WordhuntPayload,
   PicQuestPayload,
 } from '../model/activity.model';
@@ -96,8 +98,27 @@ export class CourseMapper {
           },
         };
       }
+      // course.mapper.ts
+
       case ActivityType.WRITING: {
-        return { ...base, payload: act.getPayload() };
+        const p = act.getPayload() as WritingPayload;
+        if (p.mode === 'spell') {
+          const sp = p as WritingSpellPayload;
+          return {
+            ...base,
+            payload: {
+              mode: 'spell',
+              answer: sp.answer,
+              audioUrl: sp.audioKey ? this.url(sp.audioKey) : null,
+              options: sp.options.map((o) => ({
+                char: o.char,
+                imageUrl: this.url(o.imageKey),
+              })),
+            },
+          };
+        }
+        // trace — storage key yo'q, xom qaytarish to'g'ri
+        return { ...base, payload: { mode: 'trace' } };
       }
     }
   }
