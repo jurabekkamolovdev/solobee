@@ -27,6 +27,20 @@ export class WritingTracePayloadDto {
   mode: 'trace';
 }
 
+export class WritingSpellOptionDto {
+  @ApiProperty({
+    example: 'R',
+    description: 'Letter character',
+  })
+  char: string;
+
+  @ApiProperty({
+    example: 'https://s3.solobee.uz/solobee-media/writing/xxx.png',
+    description: 'Image URL for the letter',
+  })
+  imageUrl: string;
+}
+
 export class WritingSpellPayloadDto {
   @ApiProperty({
     enum: ['spell'],
@@ -37,20 +51,23 @@ export class WritingSpellPayloadDto {
   mode: 'spell';
 
   @ApiProperty({
-    example: 'BANANA',
+    example: 'RED',
     description: 'Correct answer the user must spell',
   })
   answer: string;
 
   @ApiProperty({
-    example: ['A', 'F', 'G', 'C', 'B', 'R', 'K', 'S', 'P', 'O'],
-    type: [String],
-    description:
-      'Letters to display (including distractors), in the order shown',
+    example: 'https://s3.solobee.uz/solobee-media/writing/xxx.mp3',
+    description: 'Audio URL for the word pronunciation',
   })
-  shuffledLetters: string[];
-}
+  audioUrl: string;
 
+  @ApiProperty({
+    type: [WritingSpellOptionDto],
+    description: 'Letter options with images (including distractors)',
+  })
+  options: WritingSpellOptionDto[];
+}
 export class WordhuntOptionDto {
   @ApiProperty({
     example: 'http://localhost:9000/savodxon-media/wordhunt/option-a.webp',
