@@ -57,10 +57,20 @@ export class WritingSpellPayloadDto {
   answer: string;
 
   @ApiProperty({
+    example: 'https://s3.solobee.uz/solobee-media/writing/xxx.png',
+    description: 'Main image for the word (optional)',
+    required: false,
+    nullable: true,
+  })
+  imageUrl: string | null;
+
+  @ApiProperty({
     example: 'https://s3.solobee.uz/solobee-media/writing/xxx.mp3',
     description: 'Audio URL for the word pronunciation',
+    required: false,
+    nullable: true,
   })
-  audioUrl: string;
+  audioUrl: string | null;
 
   @ApiProperty({
     type: [WritingSpellOptionDto],

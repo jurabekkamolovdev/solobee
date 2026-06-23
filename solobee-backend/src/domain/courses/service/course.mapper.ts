@@ -109,6 +109,7 @@ export class CourseMapper {
             payload: {
               mode: 'spell',
               answer: sp.answer,
+              imageUrl: sp.imageKey ? this.url(sp.imageKey) : null,
               audioUrl: sp.audioKey ? this.url(sp.audioKey) : null,
               options: sp.options.map((o) => ({
                 char: o.char,

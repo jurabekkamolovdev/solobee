@@ -55,6 +55,7 @@ export class Activity<T extends ActivityType = ActivityType> {
         const p = this.payload as WritingPayload;
         if (p.mode === 'spell') {
           if (p.audioKey) keys.push(p.audioKey);
+          if (p.imageKey) keys.push(p.imageKey);
           for (const opt of p.options ?? []) {
             if (opt?.imageKey) keys.push(opt.imageKey);
           }
@@ -202,6 +203,7 @@ export interface WritingTracePayload {
 export interface WritingSpellPayload {
   mode: 'spell';
   answer: string;
+  imageKey?: string;
   options: {
     imageKey: string;
     char: string;

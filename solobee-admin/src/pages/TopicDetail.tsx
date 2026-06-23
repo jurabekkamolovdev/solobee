@@ -267,9 +267,18 @@ interface SpellOption {
 function WritingEditor({ activity, onSave, onDelete, saving }: EditorProps) {
   const [mode, setMode] = useState<'trace' | 'spell'>(activity?.payload?.mode ?? 'trace');
   const [answer, setAnswer] = useState(activity?.payload?.answer ?? '');
+
+  // ── root-level image ──────────────────────────────────────
+  const [imageUrl, setImageUrl] = useState<string | null>(activity?.payload?.imageUrl ?? null);
+  const [newImageKey, setNewImageKey] = useState<string | null | undefined>(undefined);
+  const [uploadingImage, setUploadingImage] = useState(false);
+
+  // ── root-level audio ──────────────────────────────────────
   const [audioUrl, setAudioUrl] = useState<string | null>(activity?.payload?.audioUrl ?? null);
   const [newAudioKey, setNewAudioKey] = useState<string | null | undefined>(undefined);
   const [uploadingAudio, setUploadingAudio] = useState(false);
+
+  // ── options ───────────────────────────────────────────────
   const [spellOptions, setSpellOptions] = useState<SpellOption[]>(
     activity?.payload?.options?.map((o: any) => ({
       char: o.char ?? '',
@@ -286,7 +295,20 @@ function WritingEditor({ activity, onSave, onDelete, saving }: EditorProps) {
   const updateOption = (idx: number, patch: Partial<SpellOption>) =>
     setSpellOptions(prev => prev.map((o, i) => i === idx ? { ...o, ...patch } : o));
 
-  const handleImageUpload = async (idx: number, file: File) => {
+  const handleRootImageUpload = async (file: File) => {
+    setUploadingImage(true);
+    try {
+      const { fileKey, publicUrl } = await coursesApi.uploadFileToS3(file, 'writing');
+      setNewImageKey(fileKey);
+      setImageUrl(publicUrl);
+    } catch {
+      alert('Rasm yuklashda xatolik');
+    } finally {
+      setUploadingImage(false);
+    }
+  };
+
+  const handleOptionImageUpload = async (idx: number, file: File) => {
     updateOption(idx, { uploading: true });
     try {
       const { fileKey, publicUrl } = await coursesApi.uploadFileToS3(file, 'writing');
@@ -314,13 +336,14 @@ function WritingEditor({ activity, onSave, onDelete, saving }: EditorProps) {
   const handleSave = () => {
     if (mode === 'trace') { onSave({ mode: 'trace' }); return; }
     if (!answer.trim()) return alert('Answer kiritilishi shart');
-    if (spellOptions.length === 0) return alert('Kamida 1 ta option qo\'shilishi shart');
+    if (spellOptions.length === 0) return alert("Kamida 1 ta option qo'shilishi shart");
     if (spellOptions.some(o => !o.char.trim())) return alert('Barcha harflar kiritilishi shart');
     if (spellOptions.some(o => !o.imageUrl)) return alert('Barcha rasmlar yuklanishi shart');
 
     onSave({
       mode: 'spell',
       answer: answer.toUpperCase(),
+      ...(newImageKey !== undefined ? { imageKey: newImageKey } : {}),
       ...(newAudioKey !== undefined ? { audioKey: newAudioKey } : {}),
       options: spellOptions.map(o => ({
         char: o.char.toUpperCase(),
@@ -348,7 +371,34 @@ function WritingEditor({ activity, onSave, onDelete, saving }: EditorProps) {
 
       {mode === 'spell' && (
         <div className="space-y-4">
-          {/* To'g'ri javob */}
+
+          {/* ── Umumiy rasm ── */}
+          <div>
+            <label className="block text-sm font-medium text-gray-700 mb-2">Umumiy rasm</label>
+            <div className="relative w-full aspect-video rounded-xl overflow-hidden bg-gray-50 border flex items-center justify-center max-w-sm">
+              {uploadingImage ? (
+                <Loader2 className="w-6 h-6 animate-spin text-primary-600" />
+              ) : imageUrl ? (
+                <>
+                  <img src={imageUrl} className="w-full h-full object-cover" />
+                  <label className="absolute inset-0 bg-black/40 opacity-0 hover:opacity-100 transition flex items-center justify-center cursor-pointer">
+                    <ImageIcon className="w-6 h-6 text-white" />
+                    <input type="file" className="sr-only" accept="image/*"
+                      onChange={e => e.target.files?.[0] && handleRootImageUpload(e.target.files[0])} />
+                  </label>
+                </>
+              ) : (
+                <label className="absolute inset-0 flex flex-col items-center justify-center cursor-pointer hover:bg-gray-100 transition">
+                  <ImageIcon className="w-6 h-6 text-gray-400" />
+                  <span className="text-xs text-gray-400 mt-1">Rasm yuklash</span>
+                  <input type="file" className="sr-only" accept="image/*"
+                    onChange={e => e.target.files?.[0] && handleRootImageUpload(e.target.files[0])} />
+                </label>
+              )}
+            </div>
+          </div>
+
+          {/* ── To'g'ri javob ── */}
           <div>
             <label className="block text-sm font-medium text-gray-700">To'g'ri javob (so'z)</label>
             <input
@@ -360,7 +410,7 @@ function WritingEditor({ activity, onSave, onDelete, saving }: EditorProps) {
             />
           </div>
 
-          {/* Audio */}
+          {/* ── Audio ── */}
           <div>
             <label className="block text-sm font-medium text-gray-700 mb-2">Audio</label>
             <AudioPicker
@@ -371,7 +421,7 @@ function WritingEditor({ activity, onSave, onDelete, saving }: EditorProps) {
             />
           </div>
 
-          {/* Options */}
+          {/* ── Options ── */}
           <div>
             <div className="flex items-center justify-between mb-2">
               <label className="block text-sm font-medium text-gray-700">
@@ -393,7 +443,7 @@ function WritingEditor({ activity, onSave, onDelete, saving }: EditorProps) {
                         <label className="absolute inset-0 bg-black/40 opacity-0 hover:opacity-100 transition flex items-center justify-center cursor-pointer">
                           <ImageIcon className="w-5 h-5 text-white" />
                           <input type="file" className="sr-only" accept="image/*"
-                            onChange={e => e.target.files?.[0] && handleImageUpload(idx, e.target.files[0])} />
+                            onChange={e => e.target.files?.[0] && handleOptionImageUpload(idx, e.target.files[0])} />
                         </label>
                       </>
                     ) : (
@@ -401,7 +451,7 @@ function WritingEditor({ activity, onSave, onDelete, saving }: EditorProps) {
                         <ImageIcon className="w-5 h-5 text-gray-400" />
                         <span className="text-xs text-gray-400 mt-1">Rasm</span>
                         <input type="file" className="sr-only" accept="image/*"
-                          onChange={e => e.target.files?.[0] && handleImageUpload(idx, e.target.files[0])} />
+                          onChange={e => e.target.files?.[0] && handleOptionImageUpload(idx, e.target.files[0])} />
                       </label>
                     )}
                   </div>
@@ -438,7 +488,6 @@ function WritingEditor({ activity, onSave, onDelete, saving }: EditorProps) {
     </div>
   );
 }
-
 type WordhuntOption = {
   imageUrl: string | null;
   newImageKey?: string; // fresh upload this session; server keeps existing key if omitted
