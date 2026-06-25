@@ -23,6 +23,10 @@ import {
   ACTIVITY_REPOSITORY,
   type IActivityRepository,
 } from 'src/datasource/courses/repository/interface/activity.repository.interface';
+import {
+  ActivityType,
+  WritingPayload,
+} from 'src/domain/courses/model/activity.model';
 
 @Injectable()
 export class ProgressServiceImpl implements IProgressService {
@@ -39,11 +43,30 @@ export class ProgressServiceImpl implements IProgressService {
   async reportActivityAttempt(
     userId: string,
     activityId: string,
+    result?: string,
   ): Promise<ActivityAttemptResult> {
     const activity = await this.activityRefRepository.findById(activityId);
     if (!activity) throw new NotFoundException('Activity not found');
 
+    const type = activity.getType();
     const threshold = ATTEMPT_THRESHOLDS[activity.getType()] ?? 1;
+
+    if (type === ActivityType.WRITING) {
+      const payload = activity.getPayload() as WritingPayload;
+      if (payload.mode === 'spell') {
+        const isCorrect =
+          result !== undefined &&
+          payload.answer.trim().toLowerCase() === result.trim().toLowerCase();
+
+        if (!isCorrect) {
+          return {
+            attemptCount: 0,
+            threshold,
+            completed: false,
+          };
+        }
+      }
+    }
 
     let progress =
       await this.activityProgressRepository.findByStudentAndActivity(
@@ -83,7 +106,6 @@ export class ProgressServiceImpl implements IProgressService {
         userId,
         topicId,
       );
-
     const map = new Map<string, Omit<ActivityProgressSnapshot, 'activityId'>>();
     for (const s of snapshots) {
       map.set(s.activityId, {

@@ -16,6 +16,7 @@ export interface IProgressService {
   reportActivityAttempt(
     userId: string,
     activityId: string,
+    result?: string,
   ): Promise<ActivityAttemptResult>;
 
   getActivityProgressByTopic(

@@ -1,4 +1,4 @@
-import { Controller, Post, Param, Req, Inject } from '@nestjs/common';
+import { Controller, Post, Param, Req, Body, Inject } from '@nestjs/common';
 import {
   ApiTags,
   ApiBearerAuth,
@@ -14,6 +14,7 @@ import { Role } from 'src/core/utils/role.enum';
 import { Roles } from 'src/core/decorators/roles.decorator';
 import { ErrorResponse } from 'src/core/utils/base-response';
 import { JwtPayload } from 'src/infrastructure/jwt/jwt.strategy';
+import { ReportAttemptDto } from '../model/request/progress-request.dto';
 
 @ApiTags('Progress')
 @ApiBearerAuth()
@@ -69,7 +70,12 @@ export class ProgressController {
   reportAttempt(
     @Param('id') activityId: string,
     @Req() req: { user: JwtPayload },
+    @Body() body: ReportAttemptDto,
   ) {
-    return this.progressService.reportActivityAttempt(req.user.id, activityId);
+    return this.progressService.reportActivityAttempt(
+      req.user.id,
+      activityId,
+      body.result,
+    );
   }
 }
