@@ -25,6 +25,12 @@ export class WritingTracePayloadDto {
       'Trace mode: user traces a letter shape. Used for alphabet topics.',
   })
   mode: 'trace';
+
+  @ApiProperty({
+    example: 'A',
+    description: 'Letter character the student traces',
+  })
+  char: string;
 }
 
 export class WritingSpellOptionDto {

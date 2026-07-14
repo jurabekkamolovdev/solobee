@@ -118,8 +118,8 @@ export class CourseMapper {
             },
           };
         }
-        // trace — storage key yo'q, xom qaytarish to'g'ri
-        return { ...base, payload: { mode: 'trace' } };
+        // trace — storage key yo'q, faqat char xom qaytariladi
+        return { ...base, payload: { mode: 'trace', char: p.char } };
       }
     }
   }

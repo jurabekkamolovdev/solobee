@@ -257,6 +257,239 @@ function LearnEditor({ activity, onSave, onDelete, saving }: EditorProps) {
   );
 }
 
+// interface SpellOption {
+//   char: string;
+//   imageUrl: string | null;
+//   newImageKey?: string;
+//   uploading?: boolean;
+// }
+
+// function WritingEditor({ activity, onSave, onDelete, saving }: EditorProps) {
+//   const [mode, setMode] = useState<'trace' | 'spell'>(activity?.payload?.mode ?? 'trace');
+//   const [answer, setAnswer] = useState(activity?.payload?.answer ?? '');
+//   const [traceChar, setTraceChar] = useState(activity?.payload?.char ?? '');
+
+//   // ── root-level image ──────────────────────────────────────
+//   const [imageUrl, setImageUrl] = useState<string | null>(activity?.payload?.imageUrl ?? null);
+//   const [newImageKey, setNewImageKey] = useState<string | null | undefined>(undefined);
+//   const [uploadingImage, setUploadingImage] = useState(false);
+
+//   // ── root-level audio ──────────────────────────────────────
+//   const [audioUrl, setAudioUrl] = useState<string | null>(activity?.payload?.audioUrl ?? null);
+//   const [newAudioKey, setNewAudioKey] = useState<string | null | undefined>(undefined);
+//   const [uploadingAudio, setUploadingAudio] = useState(false);
+
+//   // ── options ───────────────────────────────────────────────
+//   const [spellOptions, setSpellOptions] = useState<SpellOption[]>(
+//     activity?.payload?.options?.map((o: any) => ({
+//       char: o.char ?? '',
+//       imageUrl: o.imageUrl ?? null,
+//     })) ?? []
+//   );
+
+//   const addOption = () =>
+//     setSpellOptions(prev => [...prev, { char: '', imageUrl: null }]);
+
+//   const removeOption = (idx: number) =>
+//     setSpellOptions(prev => prev.filter((_, i) => i !== idx));
+
+//   const updateOption = (idx: number, patch: Partial<SpellOption>) =>
+//     setSpellOptions(prev => prev.map((o, i) => i === idx ? { ...o, ...patch } : o));
+
+//   const handleRootImageUpload = async (file: File) => {
+//     setUploadingImage(true);
+//     try {
+//       const { fileKey, publicUrl } = await coursesApi.uploadFileToS3(file, 'writing');
+//       setNewImageKey(fileKey);
+//       setImageUrl(publicUrl);
+//     } catch {
+//       alert('Rasm yuklashda xatolik');
+//     } finally {
+//       setUploadingImage(false);
+//     }
+//   };
+
+//   const handleOptionImageUpload = async (idx: number, file: File) => {
+//     updateOption(idx, { uploading: true });
+//     try {
+//       const { fileKey, publicUrl } = await coursesApi.uploadFileToS3(file, 'writing');
+//       updateOption(idx, { newImageKey: fileKey, imageUrl: publicUrl });
+//     } catch {
+//       alert('Rasm yuklashda xatolik');
+//     } finally {
+//       updateOption(idx, { uploading: false });
+//     }
+//   };
+
+//   const handleAudioUpload = async (file: File) => {
+//     setUploadingAudio(true);
+//     try {
+//       const { fileKey, publicUrl } = await coursesApi.uploadFileToS3(file, 'writing');
+//       setNewAudioKey(fileKey);
+//       setAudioUrl(publicUrl);
+//     } catch {
+//       alert('Audio yuklashda xatolik');
+//     } finally {
+//       setUploadingAudio(false);
+//     }
+//   };
+
+//   const handleSave = () => {
+//     if (mode === 'trace') { onSave({ mode: 'trace' }); return; }
+//     if (!answer.trim()) return alert('Answer kiritilishi shart');
+//     if (spellOptions.length === 0) return alert("Kamida 1 ta option qo'shilishi shart");
+//     if (spellOptions.some(o => !o.char.trim())) return alert('Barcha harflar kiritilishi shart');
+//     if (spellOptions.some(o => !o.imageUrl)) return alert('Barcha rasmlar yuklanishi shart');
+
+//     onSave({
+//       mode: 'spell',
+//       answer: answer.toUpperCase(),
+//       ...(newImageKey !== undefined ? { imageKey: newImageKey } : {}),
+//       ...(newAudioKey !== undefined ? { audioKey: newAudioKey } : {}),
+//       options: spellOptions.map(o => ({
+//         char: o.char.toUpperCase(),
+//         ...(o.newImageKey ? { imageKey: o.newImageKey } : {}),
+//       })),
+//     });
+//   };
+
+//   return (
+//     <div className="space-y-4 max-w-2xl">
+//       {/* Mode toggle */}
+//       <div className="flex gap-3">
+//         {(['trace', 'spell'] as const).map(m => (
+//           <button
+//             key={m}
+//             onClick={() => setMode(m)}
+//             className={`px-4 py-2 rounded-lg text-sm font-medium transition ${
+//               mode === m ? 'bg-primary-600 text-white' : 'bg-gray-100 text-gray-600 hover:bg-gray-200'
+//             }`}
+//           >
+//             {m === 'trace' ? 'Trace (harf chizish)' : "Spell (so'z yig'ish)"}
+//           </button>
+//         ))}
+//       </div>
+
+//       {mode === 'spell' && (
+//         <div className="space-y-4">
+
+//           {/* ── Umumiy rasm ── */}
+//           <div>
+//             <label className="block text-sm font-medium text-gray-700 mb-2">Umumiy rasm</label>
+//             <div className="relative w-full aspect-video rounded-xl overflow-hidden bg-gray-50 border flex items-center justify-center max-w-sm">
+//               {uploadingImage ? (
+//                 <Loader2 className="w-6 h-6 animate-spin text-primary-600" />
+//               ) : imageUrl ? (
+//                 <>
+//                   <img src={imageUrl} className="w-full h-full object-cover" />
+//                   <label className="absolute inset-0 bg-black/40 opacity-0 hover:opacity-100 transition flex items-center justify-center cursor-pointer">
+//                     <ImageIcon className="w-6 h-6 text-white" />
+//                     <input type="file" className="sr-only" accept="image/*"
+//                       onChange={e => e.target.files?.[0] && handleRootImageUpload(e.target.files[0])} />
+//                   </label>
+//                 </>
+//               ) : (
+//                 <label className="absolute inset-0 flex flex-col items-center justify-center cursor-pointer hover:bg-gray-100 transition">
+//                   <ImageIcon className="w-6 h-6 text-gray-400" />
+//                   <span className="text-xs text-gray-400 mt-1">Rasm yuklash</span>
+//                   <input type="file" className="sr-only" accept="image/*"
+//                     onChange={e => e.target.files?.[0] && handleRootImageUpload(e.target.files[0])} />
+//                 </label>
+//               )}
+//             </div>
+//           </div>
+
+//           {/* ── To'g'ri javob ── */}
+//           <div>
+//             <label className="block text-sm font-medium text-gray-700">To'g'ri javob (so'z)</label>
+//             <input
+//               type="text"
+//               value={answer}
+//               onChange={e => setAnswer(e.target.value.toUpperCase())}
+//               className="mt-1 block w-full p-2 border rounded-lg focus:outline-none focus:ring-2 focus:ring-primary-500 uppercase tracking-widest font-mono"
+//               placeholder="BANANA"
+//             />
+//           </div>
+
+//           {/* ── Audio ── */}
+//           <div>
+//             <label className="block text-sm font-medium text-gray-700 mb-2">Audio</label>
+//             <AudioPicker
+//               audioUrl={audioUrl ?? ''}
+//               uploading={uploadingAudio}
+//               onPick={handleAudioUpload}
+//               onClear={() => { setNewAudioKey(null); setAudioUrl(null); }}
+//             />
+//           </div>
+
+//           {/* ── Options ── */}
+//           <div>
+//             <div className="flex items-center justify-between mb-2">
+//               <label className="block text-sm font-medium text-gray-700">
+//                 Variantlar
+//                 <span className="ml-2 text-xs text-gray-400 font-normal">(bola uchun aralashtiriladi)</span>
+//               </label>
+//               <span className="text-xs text-gray-400">{spellOptions.length} ta</span>
+//             </div>
+
+//             <div className="grid grid-cols-2 sm:grid-cols-3 md:grid-cols-4 gap-3">
+//               {spellOptions.map((opt, idx) => (
+//                 <div key={idx} className="rounded-xl border border-gray-200 p-2 space-y-2">
+//                   <div className="relative aspect-square rounded-lg overflow-hidden bg-gray-50 flex items-center justify-center border">
+//                     {opt.uploading ? (
+//                       <Loader2 className="w-5 h-5 animate-spin text-primary-600" />
+//                     ) : opt.imageUrl ? (
+//                       <>
+//                         <img src={opt.imageUrl} className="w-full h-full object-cover" alt={opt.char} />
+//                         <label className="absolute inset-0 bg-black/40 opacity-0 hover:opacity-100 transition flex items-center justify-center cursor-pointer">
+//                           <ImageIcon className="w-5 h-5 text-white" />
+//                           <input type="file" className="sr-only" accept="image/*"
+//                             onChange={e => e.target.files?.[0] && handleOptionImageUpload(idx, e.target.files[0])} />
+//                         </label>
+//                       </>
+//                     ) : (
+//                       <label className="absolute inset-0 flex flex-col items-center justify-center cursor-pointer hover:bg-gray-100 transition">
+//                         <ImageIcon className="w-5 h-5 text-gray-400" />
+//                         <span className="text-xs text-gray-400 mt-1">Rasm</span>
+//                         <input type="file" className="sr-only" accept="image/*"
+//                           onChange={e => e.target.files?.[0] && handleOptionImageUpload(idx, e.target.files[0])} />
+//                       </label>
+//                     )}
+//                   </div>
+//                   <input
+//                     type="text"
+//                     value={opt.char}
+//                     maxLength={1}
+//                     onChange={e => updateOption(idx, { char: e.target.value.toUpperCase() })}
+//                     placeholder="A"
+//                     className="w-full p-1.5 text-center text-lg font-bold font-mono border rounded-lg focus:outline-none focus:ring-2 focus:ring-primary-500 uppercase"
+//                   />
+//                   <button
+//                     onClick={() => removeOption(idx)}
+//                     className="w-full text-xs text-red-400 hover:text-red-600 transition py-0.5"
+//                   >
+//                     O'chirish
+//                   </button>
+//                 </div>
+//               ))}
+
+//               <button
+//                 onClick={addOption}
+//                 className="aspect-square rounded-xl border-2 border-dashed border-gray-200 flex flex-col items-center justify-center text-gray-400 hover:border-primary-400 hover:text-primary-600 transition"
+//               >
+//                 <Plus className="w-6 h-6" />
+//                 <span className="text-xs mt-1">Qo'shish</span>
+//               </button>
+//             </div>
+//           </div>
+//         </div>
+//       )}
+
+//       <EditorFooter activity={activity} onSave={handleSave} onDelete={onDelete} saving={saving} />
+//     </div>
+//   );
+// }
+
 interface SpellOption {
   char: string;
   imageUrl: string | null;
@@ -267,6 +500,9 @@ interface SpellOption {
 function WritingEditor({ activity, onSave, onDelete, saving }: EditorProps) {
   const [mode, setMode] = useState<'trace' | 'spell'>(activity?.payload?.mode ?? 'trace');
   const [answer, setAnswer] = useState(activity?.payload?.answer ?? '');
+
+  // ── trace-level char ───────────────────────────────────────
+  const [traceChar, setTraceChar] = useState(activity?.payload?.char ?? '');
 
   // ── root-level image ──────────────────────────────────────
   const [imageUrl, setImageUrl] = useState<string | null>(activity?.payload?.imageUrl ?? null);
@@ -334,7 +570,11 @@ function WritingEditor({ activity, onSave, onDelete, saving }: EditorProps) {
   };
 
   const handleSave = () => {
-    if (mode === 'trace') { onSave({ mode: 'trace' }); return; }
+    if (mode === 'trace') {
+      if (!traceChar.trim()) return alert('Harf kiritilishi shart');
+      onSave({ mode: 'trace', char: traceChar.toUpperCase() });
+      return;
+    }
     if (!answer.trim()) return alert('Answer kiritilishi shart');
     if (spellOptions.length === 0) return alert("Kamida 1 ta option qo'shilishi shart");
     if (spellOptions.some(o => !o.char.trim())) return alert('Barcha harflar kiritilishi shart');
@@ -368,6 +608,20 @@ function WritingEditor({ activity, onSave, onDelete, saving }: EditorProps) {
           </button>
         ))}
       </div>
+
+      {mode === 'trace' && (
+        <div className="max-w-xs">
+          <label className="block text-sm font-medium text-gray-700">Chiziladigan harf</label>
+          <input
+            type="text"
+            value={traceChar}
+            maxLength={1}
+            onChange={e => setTraceChar(e.target.value.toUpperCase())}
+            placeholder="A"
+            className="mt-1 w-20 p-2 text-center text-2xl font-bold font-mono border rounded-lg focus:outline-none focus:ring-2 focus:ring-primary-500 uppercase tracking-widest"
+          />
+        </div>
+      )}
 
       {mode === 'spell' && (
         <div className="space-y-4">
@@ -488,6 +742,7 @@ function WritingEditor({ activity, onSave, onDelete, saving }: EditorProps) {
     </div>
   );
 }
+
 type WordhuntOption = {
   imageUrl: string | null;
   newImageKey?: string; // fresh upload this session; server keeps existing key if omitted

@@ -198,6 +198,7 @@ export interface LearnPayload {
 
 export interface WritingTracePayload {
   mode: 'trace';
+  char: string;
 }
 
 export interface WritingSpellPayload {
