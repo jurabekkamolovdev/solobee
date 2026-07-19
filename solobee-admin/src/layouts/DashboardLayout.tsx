@@ -1,6 +1,6 @@
 import { Navigate, Outlet, Link, useLocation } from 'react-router-dom';
 import { useAuth } from '../context/AuthContext';
-import { LogOut, Home, BookOpen, Users } from 'lucide-react';
+import { LogOut, Home, BookOpen, Users, Smile } from 'lucide-react';
 
 export const DashboardLayout = () => {
   const { user, logout, isLoading } = useAuth();
@@ -22,8 +22,8 @@ export const DashboardLayout = () => {
     { name: 'Dashboard', icon: Home, path: '/' },
     { name: 'Kindergartens', icon: Users, path: '/kindergartens' },
     { name: 'Courses', icon: BookOpen, path: '/courses' },
+    { name: 'Avatars', icon: Smile, path: '/avatars' },
   ];
-
   const handleLogout = () => {
     logout();
   };

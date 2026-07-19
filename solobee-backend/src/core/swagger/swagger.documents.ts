@@ -10,6 +10,7 @@ const MOBILE_ALLOWED_OPS: Array<[string, string]> = [
   ['get', '/courses/categories/{categoryId}/subcategories'],
   ['get', '/courses/subcategories/{subCategoryId}/topics'],
   ['get', '/courses/topics/{topicId}/activities'],
+  ['get', '/avatars'],
   ['post', '/progress/activity/{id}'],
 ];
 

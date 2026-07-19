@@ -11,6 +11,7 @@ import { RolesGuard } from './infrastructure/jwt/roles.guard';
 import { StorageControllerModule } from './web/storage/storage-web.module';
 import { CoursesControllerModule } from './web/courses/courses-web.module';
 import { ProgressControllerModule } from './web/progress/progress-web.module';
+import { AvatarControllerModule } from './web/avatar/avatar-web.module';
 
 @Module({
   imports: [
@@ -23,6 +24,7 @@ import { ProgressControllerModule } from './web/progress/progress-web.module';
     StorageControllerModule,
     CoursesControllerModule,
     ProgressControllerModule,
+    AvatarControllerModule,
   ],
   providers: [
     {
