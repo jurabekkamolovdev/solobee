@@ -23,17 +23,17 @@ export class StudentEntity {
   @JoinColumn({ name: 'userId' })
   user: UserEntity;
 
-  @Column()
-  username: string;
+  @Column({ nullable: true })
+  username: string | null;
 
-  @Column()
-  firstName: string;
+  @Column({ nullable: true })
+  firstName: string | null;
 
-  @Column()
-  lastName: string;
+  @Column({ nullable: true })
+  lastName: string | null;
 
-  @Column()
-  age: number;
+  @Column({ nullable: true })
+  age: number | null;
 
   @Column({ type: 'date', nullable: true })
   birthDate: Date | null;
