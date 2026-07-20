@@ -31,10 +31,6 @@ export class UserServiceImpl implements IUserService {
       );
     }
     const user = await User.create(params);
-    if (user.getRole() === Role.STUDENT) {
-      await this.userRepository.save(user);
-      return user;
-    }
     return this.userRepository.save(user);
   }
 

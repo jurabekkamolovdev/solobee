@@ -6,11 +6,12 @@ export class Student {
   private username: string;
   private firstName: string;
   private lastName: string;
+  private age: number;
+  private avatarId: string;
   private birthDate: Date | null;
   private address: string | null;
   private parentPhone: string | null;
   private score: number;
-  private avatarKey: string | null;
   private currentTopicId: string | null;
   private currentCategoryId: string | null;
   private createdAt: Date;
@@ -22,11 +23,12 @@ export class Student {
     username: string;
     firstName: string;
     lastName: string;
+    age: number;
+    avatarId: string;
     birthDate?: string | Date | null;
     address?: string | null;
     parentPhone?: string | null;
     score?: number;
-    avatarKey?: string | null;
     currentTopicId?: string | null;
     currentCategoryId?: string | null;
     createdAt?: Date;
@@ -37,11 +39,12 @@ export class Student {
     this.username = params.username;
     this.firstName = params.firstName;
     this.lastName = params.lastName;
+    this.age = params.age;
+    this.avatarId = params.avatarId;
     this.birthDate = params.birthDate ? new Date(params.birthDate) : null;
     this.address = params.address ?? null;
     this.parentPhone = params.parentPhone ?? null;
     this.score = params.score ?? 12000;
-    this.avatarKey = params.avatarKey ?? null;
     this.currentTopicId = params.currentTopicId ?? null;
     this.currentCategoryId = params.currentCategoryId ?? null;
     this.createdAt = params.createdAt ?? new Date();
@@ -53,6 +56,8 @@ export class Student {
     username: string,
     firstName: string,
     lastName: string,
+    age: number,
+    avatarId: string,
     birthDate?: string | null,
     address?: string | null,
     parentPhone?: string | null,
@@ -63,6 +68,8 @@ export class Student {
       username: username,
       firstName: firstName,
       lastName: lastName,
+      age: age,
+      avatarId: avatarId,
       birthDate: birthDate,
       address: address,
       parentPhone: parentPhone,
@@ -97,11 +104,6 @@ export class Student {
     this.updatedAt = new Date();
   }
 
-  setAvatar(key: string | null): void {
-    this.avatarKey = key;
-    this.updatedAt = new Date();
-  }
-
   getId(): string {
     return this.id;
   }
@@ -119,6 +121,12 @@ export class Student {
   getLastName(): string {
     return this.lastName;
   }
+  getAge(): number {
+    return this.age;
+  }
+  getAvatarId(): string {
+    return this.avatarId;
+  }
   getFullName(): string {
     return `${this.firstName} ${this.lastName}`;
   }
@@ -133,9 +141,6 @@ export class Student {
   }
   getScore(): number {
     return this.score;
-  }
-  getAvatarKey(): string | null {
-    return this.avatarKey;
   }
   getCurrentTopicId(): string | null {
     return this.currentTopicId;

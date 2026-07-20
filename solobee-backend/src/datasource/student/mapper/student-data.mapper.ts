@@ -11,11 +11,12 @@ export class StudentDataMapper {
       username: entity.username,
       firstName: entity.firstName,
       lastName: entity.lastName,
+      age: entity.age,
       birthDate: entity.birthDate,
       address: entity.address,
       parentPhone: entity.parentPhone,
       score: entity.score,
-      avatarKey: entity.avatarKey,
+      avatarId: entity.avatarId,
       currentTopicId: entity.currentTopicId,
       currentCategoryId: entity.currentCategoryId,
       createdAt: entity.createdAt,
@@ -30,11 +31,12 @@ export class StudentDataMapper {
     entity.username = domain.getUsername();
     entity.firstName = domain.getFirstName();
     entity.lastName = domain.getLastName();
+    entity.age = domain.getAge();
     entity.birthDate = domain.getBirthDate();
     entity.address = domain.getAddress();
     entity.parentPhone = domain.getParentPhone();
     entity.score = domain.getScore();
-    entity.avatarKey = domain.getAvatarKey();
+    entity.avatarId = domain.getAvatarId();
     entity.currentTopicId = domain.getCurrentTopicId();
     entity.currentCategoryId = domain.getCurrentCategoryId();
     return entity;

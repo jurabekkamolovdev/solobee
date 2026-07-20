@@ -1,9 +1,11 @@
 // domain/avatar/service/avatar.service.interface.ts
 import { AvatarGender } from 'src/datasource/avatar/model/avatar.entity';
+import { Avatar } from '../model/avatar.model';
 
 export interface IAvatarService {
   createAvatar(params: ICreateAvatar): Promise<INewAvatar>;
   getAllAvatarsGrouped(): Promise<IGroupedAvatars>;
+  getById(id: string): Promise<Avatar>;
   deleteAvatar(id: string): Promise<void>;
 }
 

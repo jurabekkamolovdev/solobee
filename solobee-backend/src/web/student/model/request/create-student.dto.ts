@@ -1,10 +1,14 @@
 import {
   IsNotEmpty,
-  IsOptional,
   IsString,
-  IsDateString,
+  IsNumber,
+  IsInt,
+  IsOptional,
+  Min,
+  Max,
 } from 'class-validator';
-import { ApiProperty } from '@nestjs/swagger';
+import { Type } from 'class-transformer';
+import { ApiProperty, ApiPropertyOptional } from '@nestjs/swagger';
 
 export class CreateStudentDto {
   @ApiProperty({ example: 'Aziz' })
@@ -17,18 +21,43 @@ export class CreateStudentDto {
   @IsString()
   lastName: string;
 
-  @ApiProperty({ example: '2018-05-15' })
-  @IsNotEmpty()
-  @IsDateString()
-  birthDate: string;
-
-  @ApiProperty({ example: 'Toshkent sh., Yunusobod t.' })
+  @ApiProperty({ example: 'Azik123' })
   @IsNotEmpty()
   @IsString()
-  address: string;
+  userName: string;
 
-  @ApiProperty({ example: '+998901234567', required: false })
+  @ApiProperty({ example: 'password123' })
+  @IsNotEmpty()
+  @IsString()
+  password: string;
+
+  @ApiProperty({ example: '6' })
+  @IsNotEmpty()
+  @IsNumber()
+  age: number;
+
+  @ApiProperty({ example: 'idq232324234dsd' })
+  @IsNotEmpty()
+  @IsString()
+  avatarId: string;
+}
+
+export class GetStudentsQueryDto {
+  @ApiPropertyOptional({
+    example: 0,
+    description: 'Nechinchi elementdan boshlab olish',
+  })
   @IsOptional()
-  @IsString()
-  parentPhone?: string;
+  @Type(() => Number)
+  @IsInt()
+  @Min(0)
+  offset: number = 0;
+
+  @ApiPropertyOptional({ example: 10, description: 'Nechta element olish' })
+  @IsOptional()
+  @Type(() => Number)
+  @IsInt()
+  @Min(1)
+  @Max(100)
+  limit: number = 10;
 }

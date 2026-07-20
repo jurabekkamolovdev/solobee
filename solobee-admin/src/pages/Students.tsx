@@ -1,209 +1,304 @@
-import React, { useState, useEffect } from 'react';
-import { apiClient } from '../api/client';
-import { Plus, Trash2, Copy, Check } from 'lucide-react';
-import { useAuth } from '../context/AuthContext';
+import { useState, useEffect } from 'react';
+import { Plus, Loader2, X, ChevronLeft, ChevronRight, GraduationCap } from 'lucide-react';
+import { studentsApi, type StudentListItem } from '../api/students';
+import { avatarsApi, type Avatar, type AvatarGender } from '../api/avatars';
+
+const LIMIT = 10;
 
 export const Students = () => {
-  const { user } = useAuth();
-  const [students, setStudents] = useState<any[]>([]);
+  const [items, setItems] = useState<StudentListItem[]>([]);
+  const [total, setTotal] = useState(0);
+  const [offset, setOffset] = useState(0);
   const [loading, setLoading] = useState(true);
-  const [isModalOpen, setIsModalOpen] = useState(false);
-  const [fullName, setFullName] = useState('');
-  
-  const [newStudentCreds, setNewStudentCreds] = useState<any>(null);
-  const [copied, setCopied] = useState(false);
+  const [modalOpen, setModalOpen] = useState(false);
 
-  const fetchStudents = async () => {
+  const fetchStudents = async (newOffset: number) => {
+    setLoading(true);
     try {
-      setLoading(true);
-      const data: any = await apiClient.get('/students');
-      setStudents(data);
-    } catch (error) {
-      console.error('Failed to fetch students', error);
-      alert('Failed to load students');
+      const res = await studentsApi.getStudents(newOffset, LIMIT);
+      setItems(res.items);
+      setTotal(res.total);
+      setOffset(newOffset);
+    } catch (err) {
+      console.error(err);
     } finally {
       setLoading(false);
     }
   };
 
-  useEffect(() => {
-    if (user?.role === 'KINDERGARTEN_ADMIN') {
-      fetchStudents();
-    }
-  }, [user]);
+  useEffect(() => { fetchStudents(0); }, []);
 
-  const handleSubmit = async (e: React.FormEvent) => {
-    e.preventDefault();
-    try {
-      const data = await apiClient.post('/students/register', { fullName });
-      setNewStudentCreds(data);
-      setFullName('');
-      fetchStudents();
-    } catch (error: any) {
-       console.error('Failed to create student', error);
-       alert(error.response?.data?.message || 'Failed to create student');
-    }
-  };
-
-  const handleCopy = () => {
-    if (newStudentCreds) {
-      navigator.clipboard.writeText(`Username: ${newStudentCreds.username}\nPassword: ${newStudentCreds.plainPassword}`);
-      setCopied(true);
-      setTimeout(() => setCopied(false), 2000);
-    }
-  };
-
-  const closeModal = () => {
-    setIsModalOpen(false);
-    setNewStudentCreds(null);
-  }
-
-  const handleDelete = async (id: string) => {
-    if (window.confirm('Are you sure you want to delete this student?')) {
-      try {
-        await apiClient.delete(`/students/${id}`);
-        fetchStudents();
-      } catch (error: any) {
-        console.error('Failed to delete student', error);
-        alert('Failed to delete student');
-      }
-    }
-  };
-
-  if (loading) return <div>Loading students...</div>;
+  const canPrev = offset > 0;
+  const canNext = offset + LIMIT < total;
+  const rangeStart = total === 0 ? 0 : offset + 1;
+  const rangeEnd = Math.min(offset + LIMIT, total);
 
   return (
     <div className="space-y-6">
-      <div className="flex justify-between items-center">
-        <h1 className="text-2xl font-bold text-gray-900">Students ({students.length})</h1>
+      <div className="flex items-center justify-between">
+        <div>
+          <h1 className="text-2xl font-bold text-gray-900">Studentlar</h1>
+          <p className="text-sm text-gray-500 mt-1">{total} ta student ro'yxatdan o'tgan</p>
+        </div>
         <button
-          onClick={() => setIsModalOpen(true)}
-          className="flex items-center px-4 py-2 bg-blue-600 text-white rounded-lg hover:bg-blue-700 focus:outline-none"
+          onClick={() => setModalOpen(true)}
+          className="flex items-center gap-2 px-4 py-2 bg-primary-600 text-white rounded-xl hover:bg-primary-700 transition"
         >
-          <Plus className="h-5 w-5 mr-2" />
-          Add Student
+          <Plus className="w-4 h-4" /> Student qo'shish
         </button>
       </div>
 
-      <div className="bg-white rounded-lg shadow overflow-hidden border border-gray-100">
-        <table className="min-w-full divide-y divide-gray-200">
-          <thead className="bg-gray-50">
-            <tr>
-              <th className="px-6 py-3 text-left text-xs font-medium text-gray-500 uppercase tracking-wider">
-                Full Name
-              </th>
-              <th className="px-6 py-3 text-left text-xs font-medium text-gray-500 uppercase tracking-wider">
-                Username
-              </th>
-              <th className="px-6 py-3 text-right text-xs font-medium text-gray-500 uppercase tracking-wider">
-                Actions
-              </th>
-            </tr>
-          </thead>
-          <tbody className="bg-white divide-y divide-gray-200">
-            {students.map((student: any) => (
-              <tr key={student.id}>
-                <td className="px-6 py-4 whitespace-nowrap text-sm font-medium text-gray-900">
-                  {student.fullName}
-                </td>
-                <td className="px-6 py-4 whitespace-nowrap text-sm text-gray-500">
-                  {student.username}
-                </td>
-                <td className="px-6 py-4 whitespace-nowrap text-right text-sm font-medium">
-                  <button 
-                    onClick={() => handleDelete(student.id)} 
-                    className="text-red-600 hover:text-red-900 ml-4 border border-red-200 p-2 rounded-md hover:bg-red-50"
-                  >
-                    <Trash2 className="h-4 w-4" />
-                  </button>
-                </td>
+      <div className="bg-white rounded-2xl shadow-sm border border-gray-100 overflow-hidden">
+        {loading ? (
+          <div className="flex justify-center py-16">
+            <Loader2 className="animate-spin w-8 h-8 text-primary-600" />
+          </div>
+        ) : items.length === 0 ? (
+          <div className="flex flex-col items-center justify-center py-16 text-gray-400">
+            <GraduationCap className="w-10 h-10 mb-2" />
+            <p className="text-sm">Hali studentlar yo'q</p>
+          </div>
+        ) : (
+          <table className="w-full text-sm">
+            <thead>
+              <tr className="border-b bg-gray-50 text-left text-gray-500">
+                <th className="px-6 py-3 font-medium">Ism</th>
+                <th className="px-6 py-3 font-medium">Familiya</th>
+                <th className="px-6 py-3 font-medium">Username</th>
+                <th className="px-6 py-3 font-medium">Yosh</th>
               </tr>
-            ))}
-            {students.length === 0 && (
-              <tr>
-                <td colSpan={3} className="px-6 py-4 text-center text-gray-500 text-sm">
-                  This kindergarten has no students yet.
-                </td>
-              </tr>
-            )}
-          </tbody>
-        </table>
+            </thead>
+            <tbody>
+              {items.map((s) => (
+                <tr key={s.id} className="border-b last:border-0 hover:bg-gray-50 transition">
+                  <td className="px-6 py-3 text-gray-900">{s.firstName}</td>
+                  <td className="px-6 py-3 text-gray-900">{s.lastName}</td>
+                  <td className="px-6 py-3 text-gray-500">{s.username}</td>
+                  <td className="px-6 py-3 text-gray-500">{s.age}</td>
+                </tr>
+              ))}
+            </tbody>
+          </table>
+        )}
+
+        {!loading && total > 0 && (
+          <div className="flex items-center justify-between px-6 py-4 border-t bg-gray-50">
+            <span className="text-sm text-gray-500">
+              {rangeStart}–{rangeEnd} / {total}
+            </span>
+            <div className="flex gap-2">
+              <button
+                onClick={() => canPrev && fetchStudents(offset - LIMIT)}
+                disabled={!canPrev}
+                className="flex items-center gap-1 px-3 py-1.5 rounded-lg text-sm border border-gray-200 text-gray-600 hover:bg-gray-100 transition disabled:opacity-40 disabled:cursor-not-allowed"
+              >
+                <ChevronLeft className="w-4 h-4" /> Oldingi
+              </button>
+              <button
+                onClick={() => canNext && fetchStudents(offset + LIMIT)}
+                disabled={!canNext}
+                className="flex items-center gap-1 px-3 py-1.5 rounded-lg text-sm border border-gray-200 text-gray-600 hover:bg-gray-100 transition disabled:opacity-40 disabled:cursor-not-allowed"
+              >
+                Keyingi <ChevronRight className="w-4 h-4" />
+              </button>
+            </div>
+          </div>
+        )}
       </div>
 
-      {/* Modal */}
-      {isModalOpen && (
-        <div className="fixed inset-0 bg-black bg-opacity-50 flex items-center justify-center z-50">
-          <div className="bg-white rounded-lg w-full max-w-sm p-6 shadow-xl relative">
-            
-            {!newStudentCreds ? (
-              <>
-                <h2 className="text-xl font-bold mb-4">Add New Student</h2>
-                <form onSubmit={handleSubmit} className="space-y-4">
-                  <div>
-                    <label className="block text-sm font-medium text-gray-700">Full Name</label>
-                    <input
-                      required
-                      name="fullName"
-                      type="text"
-                      value={fullName}
-                      onChange={(e) => setFullName(e.target.value)}
-                      placeholder="e.g. John Doe"
-                      className="mt-1 block w-full rounded-md border-gray-300 shadow-sm p-2 border focus:ring-blue-500 focus:border-blue-500"
-                    />
-                  </div>
-                  <div className="flex justify-end space-x-3 mt-6">
-                    <button
-                      type="button"
-                      onClick={closeModal}
-                      className="px-4 py-2 text-sm font-medium text-gray-700 bg-gray-100 rounded-md hover:bg-gray-200"
-                    >
-                      Cancel
-                    </button>
-                    <button
-                      type="submit"
-                      className="px-4 py-2 text-sm font-medium text-white bg-blue-600 rounded-md hover:bg-blue-700"
-                    >
-                      Generate Login
-                    </button>
-                  </div>
-                </form>
-              </>
-            ) : (
-              // Success View for Credentials
-              <div className="text-center">
-                <div className="mx-auto flex items-center justify-center h-12 w-12 rounded-full bg-green-100 mb-4">
-                  <Check className="h-6 w-6 text-green-600" />
-                </div>
-                <h3 className="text-lg leading-6 font-medium text-gray-900 mb-2">Student Added!</h3>
-                <p className="text-sm text-gray-500 mb-4">
-                  Please securely copy the login credentials below. 
-                  <br/><span className="font-bold text-red-600">The password will only be shown once!</span>
-                </p>
-                <div className="bg-gray-50 rounded p-4 text-left border border-gray-200 mb-4">
-                  <p className="font-mono text-sm mb-2"><span className="font-semibold text-gray-600">Username:</span> {newStudentCreds.username}</p>
-                  <p className="font-mono text-sm"><span className="font-semibold text-gray-600">Password:</span> {newStudentCreds.plainPassword}</p>
-                </div>
-                
-                <div className="flex space-x-3 justify-center">
-                  <button
-                    onClick={handleCopy}
-                    className="flex items-center px-4 py-2 border border-blue-600 text-blue-600 text-sm font-medium rounded-md hover:bg-blue-50"
-                  >
-                    {copied ? <Check className="h-4 w-4 mr-2"/> : <Copy className="h-4 w-4 mr-2"/> }
-                    {copied ? 'Copied!' : 'Copy'}
-                  </button>
-                  <button
-                    onClick={closeModal}
-                    className="px-4 py-2 bg-blue-600 text-white text-sm font-medium rounded-md hover:bg-blue-700"
-                  >
-                    Done
-                  </button>
-                </div>
-              </div>
-            )}
-          </div>
-        </div>
+      {modalOpen && (
+        <CreateStudentModal
+          onClose={() => setModalOpen(false)}
+          onCreated={() => {
+            setModalOpen(false);
+            fetchStudents(0);
+          }}
+        />
       )}
     </div>
   );
 };
+
+function CreateStudentModal({
+  onClose,
+  onCreated,
+}: {
+  onClose: () => void;
+  onCreated: () => void;
+}) {
+  const [firstName, setFirstName] = useState('');
+  const [lastName, setLastName] = useState('');
+  const [userName, setUserName] = useState('');
+  const [password, setPassword] = useState('');
+  const [age, setAge] = useState('');
+  const [gender, setGender] = useState<AvatarGender>('BOY');
+  const [avatars, setAvatars] = useState<{ boy: Avatar[]; girl: Avatar[] }>({ boy: [], girl: [] });
+  const [avatarId, setAvatarId] = useState<string | null>(null);
+  const [loadingAvatars, setLoadingAvatars] = useState(true);
+  const [saving, setSaving] = useState(false);
+
+  useEffect(() => {
+    avatarsApi
+      .getAvatars()
+      .then((res: any) => setAvatars(res.data ?? res))
+      .catch((err) => console.error(err))
+      .finally(() => setLoadingAvatars(false));
+  }, []);
+
+  const visibleAvatars = gender === 'BOY' ? avatars.boy : avatars.girl;
+
+  const handleSubmit = async () => {
+    if (!firstName.trim() || !lastName.trim() || !userName.trim() || !password.trim()) {
+      return alert("Barcha maydonlarni to'ldiring");
+    }
+    const ageNum = Number(age);
+    if (!age || Number.isNaN(ageNum)) {
+      return alert("Yoshni to'g'ri kiriting");
+    }
+    if (!avatarId) {
+      return alert('Avatar tanlang');
+    }
+    setSaving(true);
+    try {
+      await studentsApi.createStudent({
+        firstName,
+        lastName,
+        userName,
+        password,
+        age: ageNum,
+        avatarId,
+      });
+      onCreated();
+    } catch (err) {
+      console.error(err);
+      alert('Student yaratishda xatolik');
+    } finally {
+      setSaving(false);
+    }
+  };
+
+  return (
+    <div className="fixed inset-0 bg-black/40 flex items-center justify-center z-50 p-4">
+      <div className="bg-white rounded-2xl shadow-xl w-full max-w-lg max-h-[90vh] overflow-y-auto">
+        <div className="flex items-center justify-between px-6 py-4 border-b">
+          <h2 className="text-lg font-bold text-gray-900">Yangi student</h2>
+          <button onClick={onClose} className="p-1.5 rounded-lg hover:bg-gray-100 text-gray-400 transition">
+            <X className="w-5 h-5" />
+          </button>
+        </div>
+
+        <div className="p-6 space-y-4">
+          <div className="grid grid-cols-2 gap-4">
+            <div>
+              <label className="block text-sm font-medium text-gray-700 mb-1">Ism</label>
+              <input
+                value={firstName}
+                onChange={(e) => setFirstName(e.target.value)}
+                className="w-full p-2 border rounded-lg focus:outline-none focus:ring-2 focus:ring-primary-500"
+              />
+            </div>
+            <div>
+              <label className="block text-sm font-medium text-gray-700 mb-1">Familiya</label>
+              <input
+                value={lastName}
+                onChange={(e) => setLastName(e.target.value)}
+                className="w-full p-2 border rounded-lg focus:outline-none focus:ring-2 focus:ring-primary-500"
+              />
+            </div>
+          </div>
+
+          <div className="grid grid-cols-2 gap-4">
+            <div>
+              <label className="block text-sm font-medium text-gray-700 mb-1">Username</label>
+              <input
+                value={userName}
+                onChange={(e) => setUserName(e.target.value)}
+                className="w-full p-2 border rounded-lg focus:outline-none focus:ring-2 focus:ring-primary-500"
+              />
+            </div>
+            <div>
+              <label className="block text-sm font-medium text-gray-700 mb-1">Yosh</label>
+              <input
+                type="number"
+                value={age}
+                onChange={(e) => setAge(e.target.value)}
+                className="w-full p-2 border rounded-lg focus:outline-none focus:ring-2 focus:ring-primary-500"
+              />
+            </div>
+          </div>
+
+          <div>
+            <label className="block text-sm font-medium text-gray-700 mb-1">Parol</label>
+            <input
+              value={password}
+              onChange={(e) => setPassword(e.target.value)}
+              className="w-full p-2 border rounded-lg focus:outline-none focus:ring-2 focus:ring-primary-500"
+            />
+          </div>
+
+          <div>
+            <label className="block text-sm font-medium text-gray-700 mb-2">Avatar</label>
+            <div className="flex gap-2 mb-3">
+              {(['BOY', 'GIRL'] as const).map((g) => (
+                <button
+                  key={g}
+                  onClick={() => {
+                    setGender(g);
+                    setAvatarId(null);
+                  }}
+                  className={`px-3 py-1.5 rounded-lg text-sm font-medium transition ${
+                    gender === g ? 'bg-primary-600 text-white' : 'bg-gray-100 text-gray-600 hover:bg-gray-200'
+                  }`}
+                >
+                  {g === 'BOY' ? "O'g'il bola" : 'Qiz bola'}
+                </button>
+              ))}
+            </div>
+
+            {loadingAvatars ? (
+              <div className="flex justify-center py-8">
+                <Loader2 className="w-6 h-6 animate-spin text-primary-600" />
+              </div>
+            ) : visibleAvatars.length === 0 ? (
+              <p className="text-sm text-gray-400 py-4">Bu guruhda avatar topilmadi</p>
+            ) : (
+              <div className="grid grid-cols-4 gap-3">
+                {visibleAvatars.map((a) => (
+                  <button
+                    key={a.id}
+                    onClick={() => setAvatarId(a.id)}
+                    className={`aspect-square rounded-xl overflow-hidden border-2 transition ${
+                      avatarId === a.id
+                        ? 'border-primary-600 ring-2 ring-primary-200'
+                        : 'border-gray-100 hover:border-gray-300'
+                    }`}
+                  >
+                    {a.thumbnailUrl ? (
+                      <img src={a.thumbnailUrl} className="w-full h-full object-cover" />
+                    ) : (
+                      <div className="w-full h-full bg-gray-50" />
+                    )}
+                  </button>
+                ))}
+              </div>
+            )}
+          </div>
+        </div>
+
+        <div className="flex items-center justify-end gap-3 px-6 py-4 border-t bg-gray-50 rounded-b-2xl">
+          <button onClick={onClose} className="px-4 py-2 text-sm text-gray-600 hover:text-gray-900 transition">
+            Bekor qilish
+          </button>
+          <button
+            onClick={handleSubmit}
+            disabled={saving}
+            className="flex items-center gap-2 px-4 py-2 bg-primary-600 text-white rounded-xl text-sm hover:bg-primary-700 transition disabled:opacity-60"
+          >
+            {saving && <Loader2 className="w-4 h-4 animate-spin" />}
+            {saving ? 'Saqlanmoqda...' : 'Yaratish'}
+          </button>
+        </div>
+      </div>
+    </div>
+  );
+}

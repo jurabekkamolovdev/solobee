@@ -25,8 +25,8 @@ export const USER_SERVICE = Symbol('USER_SERVICE');
 export interface ICreateUser {
   username: string;
   role: Role;
-  kindergartenId?: string | null;
   password?: string | null;
+  kindergartenId?: string | null;
 }
 
 export interface IUpdateUser {

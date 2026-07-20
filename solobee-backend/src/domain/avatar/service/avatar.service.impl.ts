@@ -58,6 +58,16 @@ export class AvatarServiceImpl implements IAvatarService {
     await this.avatarRepository.delete(id);
   }
 
+  async getById(id: string): Promise<Avatar> {
+    const avatar: Avatar | null = await this.avatarRepository.findById(id);
+
+    if (!avatar) {
+      throw new NotFoundException(`Avatar with id "${id}" not found`);
+    }
+
+    return avatar;
+  }
+
   private toResponse(avatar: Avatar): INewAvatar {
     return {
       id: avatar.getId(),

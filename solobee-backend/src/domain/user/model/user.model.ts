@@ -17,8 +17,6 @@ export class User {
   private createdAt: Date;
   private updatedAt: Date;
 
-  private plainPassword: string | null = null;
-
   constructor(params: {
     id: string;
     username: string;
@@ -44,15 +42,18 @@ export class User {
   }
 
   static async create(params: ICreateUser): Promise<User> {
-    if (params.role === Role.STUDENT) {
-      const suffix = uuidv4().replace(/-/g, '').substring(0, 4).toLowerCase();
-      const cleanName = params.username.toLowerCase().replace(/\s+/g, '');
-      params.username = `${cleanName}-${suffix}`;
-    }
+    // if (params.role === Role.STUDENT) {
+    //   const suffix = uuidv4().replace(/-/g, '').substring(0, 4).toLowerCase();
+    //   const cleanName = params.username.toLowerCase().replace(/\s+/g, '');
+    //   params.username = `${cleanName}-${suffix}`;
+    // }
 
     const id = uuidv4();
-    const resolvedPassword = params.password || User.generateStrongPassword(10);
-    const passwordHash = await bcrypt.hash(resolvedPassword, SALT_ROUNDS);
+    // const resolvedPassword = params.password || User.generateStrongPassword(10);
+    if (!params.password) {
+      throw new Error(`Password User`);
+    }
+    const passwordHash = await bcrypt.hash(params.password, SALT_ROUNDS);
 
     const user = new User({
       id: id,
@@ -61,8 +62,6 @@ export class User {
       role: params.role,
       kindergartenId: params.kindergartenId ?? null,
     });
-
-    user.plainPassword = resolvedPassword;
     return user;
   }
 
@@ -121,12 +120,6 @@ export class User {
   }
   getUpdatedAt(): Date {
     return this.updatedAt;
-  }
-
-  getAndClearPlainPassword(): string | null {
-    const pwd = this.plainPassword;
-    this.plainPassword = null;
-    return pwd;
   }
 
   deactivate(): void {

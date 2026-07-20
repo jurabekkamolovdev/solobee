@@ -9,6 +9,7 @@ import { CategoryDetail } from './pages/CategoryDetail';
 import { SubCategoryDetail } from './pages/SubCategoryDetail';
 import { TopicDetail } from './pages/TopicDetail';
 import { AvatarManagement } from './pages/AvatarManagement';
+import { Students } from './pages/Students';
 
 const GuestRoute = ({ children }: { children: React.ReactNode }) => {
   const { user, isLoading } = useAuth();
@@ -46,6 +47,7 @@ export const App = () => {
             <Route path="/courses/:categoryId/:subCategoryId" element={<SubCategoryDetail />} />
             <Route path="/courses/:categoryId/:subCategoryId/:topicId" element={<TopicDetail />} />
             <Route path="/avatars" element={<AvatarManagement />} />
+            <Route path="/students" element={<Students />} />
           </Route>
 
           <Route path="*" element={<Navigate to="/" replace />} />

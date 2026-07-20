@@ -3,11 +3,13 @@ import {
   PrimaryColumn,
   Column,
   OneToOne,
+  ManyToOne,
   JoinColumn,
   CreateDateColumn,
   UpdateDateColumn,
 } from 'typeorm';
 import { UserEntity } from 'src/datasource/user/model/user.entity';
+import { AvatarEntity } from 'src/datasource/avatar/model/avatar.entity';
 
 @Entity('students')
 export class StudentEntity {
@@ -30,6 +32,9 @@ export class StudentEntity {
   @Column()
   lastName: string;
 
+  @Column()
+  age: number;
+
   @Column({ type: 'date', nullable: true })
   birthDate: Date | null;
 
@@ -42,14 +47,18 @@ export class StudentEntity {
   @Column({ default: 12000 })
   score: number;
 
-  @Column({ type: 'varchar', nullable: true })
-  avatarKey: string | null;
+  @Column({ type: 'uuid', nullable: true })
+  avatarId: string;
+
+  @ManyToOne(() => AvatarEntity, { nullable: true, onDelete: 'SET NULL' })
+  @JoinColumn({ name: 'avatarId' })
+  avatar: AvatarEntity;
 
   @Column({ type: 'varchar', nullable: true })
-  currentTopicId: string | null; // Last accessed or next lesson for the Home Page card
+  currentTopicId: string | null;
 
   @Column({ type: 'varchar', nullable: true })
-  currentCategoryId: string | null; // The category of the current topic for UI quick-access
+  currentCategoryId: string | null;
 
   @CreateDateColumn()
   createdAt: Date;
