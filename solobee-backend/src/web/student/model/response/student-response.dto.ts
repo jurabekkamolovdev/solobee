@@ -26,7 +26,7 @@ export class StudentArrayResponseDto extends BaseResponse {
   total: number;
 }
 
-export class StudentProfileResponseDto extends BaseResponse {
+export class StudentProfileDataDto {
   @ApiProperty()
   firstName: string;
 
@@ -41,4 +41,9 @@ export class StudentProfileResponseDto extends BaseResponse {
 
   @ApiProperty()
   avatar: string;
+}
+
+export class StudentProfileResponseDto extends BaseResponse {
+  @ApiProperty({ type: StudentProfileDataDto })
+  data: StudentProfileDataDto;
 }
