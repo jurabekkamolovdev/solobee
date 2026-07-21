@@ -8,15 +8,15 @@ export class StudentDataMapper {
     return new Student({
       id: entity.id,
       userId: entity.userId,
-      username: entity.username!,
-      firstName: entity.firstName!,
-      lastName: entity.lastName!,
-      age: entity.age!,
+      username: entity.username,
+      firstName: entity.firstName,
+      lastName: entity.lastName,
+      age: entity.age,
+      avatarId: entity.avatarId,
       birthDate: entity.birthDate,
       address: entity.address,
       parentPhone: entity.parentPhone,
       score: entity.score,
-      avatarId: entity.avatarId,
       currentTopicId: entity.currentTopicId,
       currentCategoryId: entity.currentCategoryId,
       createdAt: entity.createdAt,
@@ -32,11 +32,11 @@ export class StudentDataMapper {
     entity.firstName = domain.getFirstName();
     entity.lastName = domain.getLastName();
     entity.age = domain.getAge();
+    entity.avatarId = domain.getAvatarId();
     entity.birthDate = domain.getBirthDate();
     entity.address = domain.getAddress();
     entity.parentPhone = domain.getParentPhone();
     entity.score = domain.getScore();
-    entity.avatarId = domain.getAvatarId();
     entity.currentTopicId = domain.getCurrentTopicId();
     entity.currentCategoryId = domain.getCurrentCategoryId();
     return entity;
