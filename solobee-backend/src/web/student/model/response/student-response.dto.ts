@@ -25,3 +25,20 @@ export class StudentArrayResponseDto extends BaseResponse {
   @ApiProperty({ example: 42, description: 'Jami studentlar soni' })
   total: number;
 }
+
+export class StudentProfileResponseDto extends BaseResponse {
+  @ApiProperty()
+  firstName: string;
+
+  @ApiProperty()
+  lastName: string;
+
+  @ApiProperty()
+  username: string;
+
+  @ApiProperty()
+  age: number;
+
+  @ApiProperty()
+  avatar: string;
+}

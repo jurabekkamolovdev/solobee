@@ -4,9 +4,15 @@ import { STUDENT_SERVICE } from './service/student.service.interface';
 import { StudentServiceImpl } from './service/student.service.impl';
 import { StudentDatasourceModule } from 'src/datasource/student/student-datasource.module';
 import { AvatarDomainModule } from '../avatar/avatar-domain.module';
+import { StorageModule } from 'src/infrastructure/storage/storage.module';
 
 @Module({
-  imports: [UserDomainModule, StudentDatasourceModule, AvatarDomainModule],
+  imports: [
+    UserDomainModule,
+    StudentDatasourceModule,
+    AvatarDomainModule,
+    StorageModule,
+  ],
   providers: [
     {
       provide: STUDENT_SERVICE,

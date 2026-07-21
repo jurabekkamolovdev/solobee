@@ -1,4 +1,12 @@
-import { Controller, Get, Post, Body, Inject, Query } from '@nestjs/common';
+import {
+  Controller,
+  Get,
+  Post,
+  Body,
+  Inject,
+  Query,
+  Req,
+} from '@nestjs/common';
 import {
   ApiTags,
   ApiBearerAuth,
@@ -17,9 +25,13 @@ import {
   GetStudentsQueryDto,
 } from '../model/request/create-student.dto';
 import { ErrorResponse, ObjectResponse } from 'src/core/utils/base-response';
-import { StudentArrayResponseDto } from '../model/response/student-response.dto';
+import {
+  StudentArrayResponseDto,
+  StudentProfileResponseDto,
+} from '../model/response/student-response.dto';
 import { StudentWebMapper } from '../mapper/student-web.mapper';
 import { Public } from 'src/core/decorators/public.decorator';
+import { JwtPayload } from 'src/infrastructure/jwt/jwt.strategy';
 
 @ApiTags('Students')
 @ApiBearerAuth()
@@ -98,5 +110,17 @@ export class StudentController {
       items: items.map((s) => this.webMapper.toListItemDto(s)),
       total,
     });
+  }
+
+  @Roles(Role.STUDENT)
+  @Get('profile')
+  @ApiOperation({ summary: 'Get student profile' })
+  @ApiResponse({
+    status: 200,
+    description: 'Student profile',
+    type: StudentProfileResponseDto,
+  })
+  async getProfile(@Req() req: { user: JwtPayload }) {
+    return this.studentService.getStudentProfile(req.user.id);
   }
 }
