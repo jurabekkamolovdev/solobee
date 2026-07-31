@@ -58,6 +58,16 @@ export class StudentRepositoryImpl implements IStudentRepository {
     };
   }
 
+  async findByUserId(studentId: string): Promise<Student | null> {
+    const entity: StudentEntity | null = await this.students.findOne({
+      where: { userId: studentId },
+    });
+
+    if (!entity) return null;
+
+    return this.mapper.toDomain(entity);
+  }
+
   async findById(studentId: string): Promise<Student | null> {
     const entity: StudentEntity | null = await this.students.findOne({
       where: { id: studentId },

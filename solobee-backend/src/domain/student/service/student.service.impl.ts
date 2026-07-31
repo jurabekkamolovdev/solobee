@@ -88,7 +88,7 @@ export class StudentServiceImpl implements IStudentService {
 
   async getStudentProfile(studentId: string): Promise<IStudentProfile> {
     const student: Student | null =
-      await this.studentRepository.findById(studentId);
+      await this.studentRepository.findByUserId(studentId);
 
     if (!student) throw new BadRequestException('Student profile not found');
 
