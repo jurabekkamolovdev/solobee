@@ -5,6 +5,7 @@ import { StudentServiceImpl } from './service/student.service.impl';
 import { StudentDatasourceModule } from 'src/datasource/student/student-datasource.module';
 import { AvatarDomainModule } from '../avatar/avatar-domain.module';
 import { StorageModule } from 'src/infrastructure/storage/storage.module';
+import { ProgressDomainModule } from '../progress/progress-domain.module';
 
 @Module({
   imports: [
@@ -12,6 +13,7 @@ import { StorageModule } from 'src/infrastructure/storage/storage.module';
     StudentDatasourceModule,
     AvatarDomainModule,
     StorageModule,
+    ProgressDomainModule,
   ],
   providers: [
     {

@@ -3,6 +3,7 @@ import {
   type IStudentService,
   ICreateStudent,
   IStudentProfile,
+  IStudentStatistics,
 } from './student.service.interface';
 import { Student } from '../model/student.model';
 import {
@@ -23,6 +24,11 @@ import {
   STORAGE_SERVICE,
   type IStorageService,
 } from 'src/infrastructure/storage/storage.interface';
+import {
+  PROGRESS_SERVICE,
+  type IProgressService,
+  IWeeklyStatistics,
+} from 'src/domain/progress/service/progress.service.interface';
 
 @Injectable()
 export class StudentServiceImpl implements IStudentService {
@@ -35,6 +41,8 @@ export class StudentServiceImpl implements IStudentService {
     private readonly avatarService: IAvatarService,
     @Inject(STORAGE_SERVICE)
     private readonly storageService: IStorageService,
+    @Inject(PROGRESS_SERVICE)
+    private readonly progressService: IProgressService,
   ) {}
 
   async createStudent(params: ICreateStudent): Promise<boolean> {
@@ -69,6 +77,13 @@ export class StudentServiceImpl implements IStudentService {
     return this.studentRepository.findAll(offset, limit);
   }
 
+  async deleteStudent(studentId: string): Promise<boolean> {
+    const student = await this.studentRepository.findById(studentId);
+    if (!student) throw new BadRequestException('Student topilmadi');
+
+    return this.studentRepository.deleteById(studentId);
+  }
+
   async getStudentProfile(studentId: string): Promise<IStudentProfile> {
     const student: Student | null =
       await this.studentRepository.findById(studentId);
@@ -86,5 +101,18 @@ export class StudentServiceImpl implements IStudentService {
       age: student.getAge(),
       avatar: this.storageService.getPublicUrl(studentAvatar.getThumbnailKey()),
     };
+  }
+  async getStudentStatistics(studentId: string): Promise<IStudentStatistics> {
+    const completedToday =
+      await this.progressService.getCompletedActivitiesCountByDate(
+        studentId,
+        new Date(),
+      );
+
+    return { completedToday };
+  }
+
+  async getWeeklyStatistics(studentId: string): Promise<IWeeklyStatistics> {
+    return this.progressService.getWeeklyStatistics(studentId, new Date());
   }
 }

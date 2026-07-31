@@ -4,6 +4,8 @@ import {
   type IProgressService,
   ActivityAttemptResult,
   ActivityProgressSnapshot,
+  IDailyCompletion,
+  IWeeklyStatistics,
 } from './progress.service.interface';
 import {
   ActivityProgress,
@@ -30,6 +32,15 @@ import {
 
 @Injectable()
 export class ProgressServiceImpl implements IProgressService {
+  private readonly dayNames = [
+    'Dushanba',
+    'Seshanba',
+    'Chorshanba',
+    'Payshanba',
+    'Juma',
+    'Shanba',
+    'Yakshanba',
+  ];
   constructor(
     @Inject(ACTIVITY_PROGRESS_REPOSITORY)
     private readonly activityProgressRepository: IActivityProgressRepository,
@@ -128,6 +139,16 @@ export class ProgressServiceImpl implements IProgressService {
     return new Set(ids);
   }
 
+  async getCompletedActivitiesCountByDate(
+    userId: string,
+    date: Date,
+  ): Promise<number> {
+    return this.activityProgressRepository.countCompletedByStudentAndDate(
+      userId,
+      date,
+    );
+  }
+
   async getTopicStatus(
     userId: string,
     topicId: string,
@@ -138,5 +159,59 @@ export class ProgressServiceImpl implements IProgressService {
         topicId,
       );
     return status ?? ProgressStatus.LOCKED;
+  }
+
+  async getWeeklyStatistics(
+    userId: string,
+    referenceDate: Date = new Date(),
+  ): Promise<IWeeklyStatistics> {
+    const { weekStart, weekEnd } = this.getWeekRange(referenceDate);
+
+    const grouped =
+      await this.activityProgressRepository.countCompletedGroupedByDate(
+        userId,
+        weekStart,
+        weekEnd,
+      );
+
+    const countByDate = new Map(grouped.map((g) => [g.date, g.count]));
+
+    const days: IDailyCompletion[] = [];
+    for (let i = 0; i < 7; i++) {
+      const current = new Date(weekStart);
+      current.setDate(weekStart.getDate() + i);
+      const dateKey = current.toISOString().slice(0, 10);
+
+      days.push({
+        date: dateKey,
+        dayOfWeek: this.dayNames[i],
+        completed: countByDate.get(dateKey) ?? 0,
+      });
+    }
+
+    return {
+      weekStart: weekStart.toISOString().slice(0, 10),
+      weekEnd: weekEnd.toISOString().slice(0, 10),
+      days,
+    };
+  }
+
+  private getWeekRange(referenceDate: Date): {
+    weekStart: Date;
+    weekEnd: Date;
+  } {
+    const date = new Date(referenceDate);
+    const day = date.getDay();
+    const diffToMonday = day === 0 ? -6 : 1 - day;
+
+    const weekStart = new Date(date);
+    weekStart.setDate(date.getDate() + diffToMonday);
+    weekStart.setHours(0, 0, 0, 0);
+
+    const weekEnd = new Date(weekStart);
+    weekEnd.setDate(weekStart.getDate() + 6);
+    weekEnd.setHours(23, 59, 59, 999);
+
+    return { weekStart, weekEnd };
   }
 }

@@ -13,6 +13,8 @@ const MOBILE_ALLOWED_OPS: Array<[string, string]> = [
   ['get', '/avatars'],
   ['post', '/students/register'],
   ['get', '/students/profile'],
+  ['get', '/students/statistics'],
+  ['get', '/students/statistics/weekly'],
   ['post', '/progress/activity/{id}'],
 ];
 

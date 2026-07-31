@@ -29,7 +29,29 @@ export interface IProgressService {
     topicIds: string[],
   ): Promise<Set<string>>;
 
+  getCompletedActivitiesCountByDate(
+    userId: string,
+    date: Date,
+  ): Promise<number>;
+
   getTopicStatus(userId: string, topicId: string): Promise<ProgressStatus>;
+
+  getWeeklyStatistics(
+    userId: string,
+    referenceDate: Date,
+  ): Promise<IWeeklyStatistics>;
+}
+
+export interface IDailyCompletion {
+  date: string;
+  dayOfWeek: string;
+  completed: number;
+}
+
+export interface IWeeklyStatistics {
+  weekStart: string;
+  weekEnd: string;
+  days: IDailyCompletion[];
 }
 
 export const PROGRESS_SERVICE = Symbol('PROGRESS_SERVICE');

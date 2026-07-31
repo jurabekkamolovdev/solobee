@@ -6,6 +6,8 @@ import {
   Inject,
   Query,
   Req,
+  Param,
+  Delete,
 } from '@nestjs/common';
 import {
   ApiTags,
@@ -28,6 +30,8 @@ import { ErrorResponse, ObjectResponse } from 'src/core/utils/base-response';
 import {
   StudentArrayResponseDto,
   StudentProfileResponseDto,
+  StudentStatisticsResponseDto,
+  StudentWeeklyStatisticsResponseDto,
 } from '../model/response/student-response.dto';
 import { StudentWebMapper } from '../mapper/student-web.mapper';
 import { Public } from 'src/core/decorators/public.decorator';
@@ -88,6 +92,24 @@ export class StudentController {
   // }
 
   @Roles(Role.SUPER_ADMIN)
+  @Delete(':id')
+  @ApiOperation({ summary: 'Delete a student (SUPER_ADMIN only)' })
+  @ApiResponse({
+    status: 200,
+    description: 'Student successfully deleted',
+    type: ObjectResponse,
+  })
+  @ApiResponse({
+    status: 401,
+    description: 'Unauthorized',
+    type: ErrorResponse,
+  })
+  async deleteStudent(@Param('id') id: string) {
+    const response = await this.studentService.deleteStudent(id);
+    return new ObjectResponse(response);
+  }
+
+  @Roles(Role.SUPER_ADMIN)
   @Get()
   @ApiOperation({ summary: 'Get all students' })
   @ApiResponse({
@@ -122,5 +144,29 @@ export class StudentController {
   })
   async getProfile(@Req() req: { user: JwtPayload }) {
     return this.studentService.getStudentProfile(req.user.id);
+  }
+
+  @Roles(Role.STUDENT)
+  @Get('statistics')
+  @ApiOperation({ summary: "Get student's today statistics" })
+  @ApiResponse({
+    status: 200,
+    description: "Student's today statistics",
+    type: StudentStatisticsResponseDto,
+  })
+  async getStatistics(@Req() req: { user: JwtPayload }) {
+    return this.studentService.getStudentStatistics(req.user.id);
+  }
+
+  @Roles(Role.STUDENT)
+  @Get('statistics/weekly')
+  @ApiOperation({ summary: "Get student's weekly statistics" })
+  @ApiResponse({
+    status: 200,
+    description: "Student's weekly statistics (Monday–Sunday)",
+    type: StudentWeeklyStatisticsResponseDto,
+  })
+  async getWeeklyStatistics(@Req() req: { user: JwtPayload }) {
+    return this.studentService.getWeeklyStatistics(req.user.id);
   }
 }

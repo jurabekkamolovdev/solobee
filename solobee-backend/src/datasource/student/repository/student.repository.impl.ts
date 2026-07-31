@@ -58,6 +58,19 @@ export class StudentRepositoryImpl implements IStudentRepository {
     };
   }
 
+  async deleteById(studentId: string): Promise<boolean> {
+    try {
+      const result = await this.students.delete({ userId: studentId });
+      return (result.affected ?? 0) > 0;
+    } catch (error) {
+      this.logger.error(
+        `Student o'chirilmadi (id: ${studentId}): ${error}`,
+        error,
+      );
+      return false;
+    }
+  }
+
   async findById(studentId: string): Promise<Student | null> {
     const entity: StudentEntity | null = await this.students.findOne({
       where: { userId: studentId },
