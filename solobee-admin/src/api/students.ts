@@ -30,4 +30,7 @@ export const studentsApi = {
 
   createStudent: (data: CreateStudentPayload) =>
     apiClient.post<never, boolean>('/students/register', data),
+
+  deleteStudent: (id: string) =>
+    apiClient.delete<never, boolean>(`/students/${id}`),
 };

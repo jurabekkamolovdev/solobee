@@ -78,10 +78,12 @@ export class StudentServiceImpl implements IStudentService {
   }
 
   async deleteStudent(studentId: string): Promise<boolean> {
+    // console.log(studentId);
     const student = await this.studentRepository.findById(studentId);
+    // console.log(student);
     if (!student) throw new BadRequestException('Student topilmadi');
 
-    return this.studentRepository.deleteById(studentId);
+    return this.userService.delete(student.getUserId());
   }
 
   async getStudentProfile(studentId: string): Promise<IStudentProfile> {

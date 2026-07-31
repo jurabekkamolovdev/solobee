@@ -1,5 +1,5 @@
 import { useState, useEffect } from 'react';
-import { Plus, Loader2, X, ChevronLeft, ChevronRight, GraduationCap } from 'lucide-react';
+import { Plus, Loader2, X, ChevronLeft, ChevronRight, GraduationCap, Trash2 } from 'lucide-react';
 import { studentsApi, type StudentListItem } from '../api/students';
 import { avatarsApi, type Avatar, type AvatarGender } from '../api/avatars';
 
@@ -11,6 +11,7 @@ export const Students = () => {
   const [offset, setOffset] = useState(0);
   const [loading, setLoading] = useState(true);
   const [modalOpen, setModalOpen] = useState(false);
+  const [deletingId, setDeletingId] = useState<string | null>(null);
 
   const fetchStudents = async (newOffset: number) => {
     setLoading(true);
@@ -27,6 +28,22 @@ export const Students = () => {
   };
 
   useEffect(() => { fetchStudents(0); }, []);
+
+  const handleDelete = async (id: string) => {
+    if (!confirm("Studentni o'chirishni tasdiqlaysizmi?")) return;
+
+    setDeletingId(id);
+    try {
+      await studentsApi.deleteStudent(id);
+      const nextOffset = items.length === 1 && offset > 0 ? offset - LIMIT : offset;
+      await fetchStudents(nextOffset);
+    } catch (err) {
+      console.error(err);
+      alert("O'chirishda xatolik");
+    } finally {
+      setDeletingId(null);
+    }
+  };
 
   const canPrev = offset > 0;
   const canNext = offset + LIMIT < total;
@@ -66,6 +83,7 @@ export const Students = () => {
                 <th className="px-6 py-3 font-medium">Familiya</th>
                 <th className="px-6 py-3 font-medium">Username</th>
                 <th className="px-6 py-3 font-medium">Yosh</th>
+                <th className="px-6 py-3 font-medium text-right">Amallar</th>
               </tr>
             </thead>
             <tbody>
@@ -75,6 +93,20 @@ export const Students = () => {
                   <td className="px-6 py-3 text-gray-900">{s.lastName}</td>
                   <td className="px-6 py-3 text-gray-500">{s.username}</td>
                   <td className="px-6 py-3 text-gray-500">{s.age}</td>
+                  <td className="px-6 py-3 text-right">
+                    <button
+                      onClick={() => handleDelete(s.id)}
+                      disabled={deletingId === s.id}
+                      className="p-1.5 rounded-lg text-red-500 hover:bg-red-50 transition disabled:opacity-40"
+                      aria-label="O'chirish"
+                    >
+                      {deletingId === s.id ? (
+                        <Loader2 className="w-4 h-4 animate-spin" />
+                      ) : (
+                        <Trash2 className="w-4 h-4" />
+                      )}
+                    </button>
+                  </td>
                 </tr>
               ))}
             </tbody>

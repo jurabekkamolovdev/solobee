@@ -8,7 +8,6 @@ export interface IStudentRepository {
     limit: number,
   ): Promise<{ items: Student[]; total: number }>;
   findById(studentId: string): Promise<Student | null>;
-  deleteById(studentId: string): Promise<boolean>;
 }
 
 export const STUDENT_REPOSITORY = Symbol('STUDENT_REPOSITORY');
