@@ -51,12 +51,39 @@ export class StudentProfileResponseDto extends BaseResponse {
   data: StudentProfileDataDto;
 }
 
+export class TimePlayedDto {
+  @ApiProperty({
+    example: 2,
+    description: 'Bugun sarflangan vaqt — daqiqa qismi',
+  })
+  minutes: number;
+
+  @ApiProperty({
+    example: 18,
+    description: 'Bugun sarflangan vaqt — soniya qismi',
+  })
+  seconds: number;
+}
+
 export class StudentStatisticsDto {
   @ApiProperty({
     example: 5,
     description: 'Bugun tugallangan activity-lar soni',
   })
   completedToday: number;
+
+  @ApiProperty({
+    type: TimePlayedDto,
+    description: 'Bugun activity-larga sarflangan umumiy vaqt',
+  })
+  timePlayed: TimePlayedDto;
+
+  @ApiProperty({
+    example: 75,
+    description:
+      'Bugungi umumiy progress foizi (olingan ball / maksimal ball * 100)',
+  })
+  totalProgress: number;
 }
 
 export class StudentStatisticsResponseDto extends BaseResponse {
@@ -76,6 +103,12 @@ export class DailyCompletionDto {
     description: 'Shu kuni tugallangan activity-lar soni',
   })
   completed: number;
+
+  @ApiProperty({
+    example: 8,
+    description: "Shu kuni yig'ilgan ball",
+  })
+  starsEarned: number;
 }
 
 export class StudentWeeklyStatisticsDto {
@@ -90,6 +123,13 @@ export class StudentWeeklyStatisticsDto {
 
   @ApiProperty({ type: [DailyCompletionDto] })
   days: DailyCompletionDto[];
+
+  @ApiProperty({
+    example: 75,
+    description:
+      "Haftalik umumiy progress foizi (yig'ilgan ball / maksimal ball * 100)",
+  })
+  totalProgress: number;
 }
 
 export class StudentWeeklyStatisticsResponseDto extends BaseResponse {

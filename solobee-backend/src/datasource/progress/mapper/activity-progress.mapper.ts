@@ -12,6 +12,8 @@ export class ActivityProgressMapper {
       starsEarned: entity.starsEarned,
       attemptCount: entity.attemptCount,
       isCompleted: entity.isCompleted,
+      createdAt: entity.createdAt,
+      updatedAt: entity.updatedAt,
     });
   }
 

@@ -22,6 +22,8 @@ export class ActivityProgress {
   private starsEarned: number;
   private attemptCount: number;
   private isCompleted: boolean;
+  private createdAt?: Date;
+  private updatedAt?: Date;
 
   constructor(params: {
     id: string;
@@ -30,6 +32,8 @@ export class ActivityProgress {
     starsEarned?: number;
     attemptCount?: number;
     isCompleted?: boolean;
+    createdAt?: Date;
+    updatedAt?: Date;
   }) {
     this.id = params.id;
     this.studentUserId = params.studentUserId;
@@ -37,6 +41,8 @@ export class ActivityProgress {
     this.starsEarned = params.starsEarned ?? 0;
     this.attemptCount = params.attemptCount ?? 0;
     this.isCompleted = params.isCompleted ?? false;
+    this.createdAt = params.createdAt;
+    this.updatedAt = params.updatedAt;
   }
 
   static create(studentUserId: string, activityId: string): ActivityProgress {
@@ -109,5 +115,11 @@ export class ActivityProgress {
   }
   incrementAttempt(): void {
     this.attemptCount++;
+  }
+  getCreatedAt(): Date | undefined {
+    return this.createdAt;
+  }
+  getUpdatedAt(): Date | undefined {
+    return this.updatedAt;
   }
 }

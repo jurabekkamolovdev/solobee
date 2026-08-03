@@ -11,20 +11,20 @@ export interface IActivityProgressRepository {
     studentUserId: string,
     activityIds: string[],
   ): Promise<number>;
-  countCompletedByStudentAndDate(
+  findCompletedByStudentAndDate(
     studentUserId: string,
     date: Date,
-  ): Promise<number>;
+  ): Promise<ActivityProgress[]>;
   findSnapshotsByStudentAndTopic(
     studentUserId: string,
     topicId: string,
   ): Promise<ActivityProgressSnapshot[]>;
 
-  countCompletedGroupedByDate(
+  getCompletedStatsGroupedByDate(
     studentUserId: string,
     startDate: Date,
     endDate: Date,
-  ): Promise<{ date: string; count: number }[]>;
+  ): Promise<{ date: string; count: number; totalStars: number }[]>;
 }
 
 export const ACTIVITY_PROGRESS_REPOSITORY = Symbol(

@@ -49,34 +49,37 @@ export class ActivityProgressRepositoryImpl implements IActivityProgressReposito
     });
   }
 
-  async countCompletedByStudentAndDate(
+  async findCompletedByStudentAndDate(
     studentUserId: string,
     date: Date,
-  ): Promise<number> {
+  ): Promise<ActivityProgress[]> {
     const startOfDay = new Date(date);
     startOfDay.setHours(0, 0, 0, 0);
 
     const endOfDay = new Date(date);
     endOfDay.setHours(23, 59, 59, 999);
 
-    return this.repo.count({
+    const entities = await this.repo.find({
       where: {
         studentUserId,
         isCompleted: true,
         updatedAt: Between(startOfDay, endOfDay),
       },
     });
+
+    return entities.map((e) => this.mapper.toDomain(e));
   }
 
-  async countCompletedGroupedByDate(
+  async getCompletedStatsGroupedByDate(
     studentUserId: string,
     startDate: Date,
     endDate: Date,
-  ): Promise<{ date: string; count: number }[]> {
+  ): Promise<{ date: string; count: number; totalStars: number }[]> {
     const raw = await this.repo
       .createQueryBuilder('ap')
       .select("TO_CHAR(ap.updatedAt, 'YYYY-MM-DD')", 'date')
       .addSelect('COUNT(*)', 'count')
+      .addSelect('SUM(ap.starsEarned)', 'totalStars')
       .where('ap.studentUserId = :studentUserId', { studentUserId })
       .andWhere('ap.isCompleted = true')
       .andWhere('ap.updatedAt BETWEEN :start AND :end', {
@@ -86,7 +89,11 @@ export class ActivityProgressRepositoryImpl implements IActivityProgressReposito
       .groupBy('date')
       .getRawMany();
 
-    return raw.map((r) => ({ date: r.date, count: Number(r.count) }));
+    return raw.map((r) => ({
+      date: r.date,
+      count: Number(r.count),
+      totalStars: Number(r.totalStars),
+    }));
   }
 
   async findSnapshotsByStudentAndTopic(

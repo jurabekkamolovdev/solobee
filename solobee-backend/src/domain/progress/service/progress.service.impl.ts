@@ -6,6 +6,7 @@ import {
   ActivityProgressSnapshot,
   IDailyCompletion,
   IWeeklyStatistics,
+  DailyProgressSummary,
 } from './progress.service.interface';
 import {
   ActivityProgress,
@@ -25,10 +26,6 @@ import {
   ACTIVITY_REPOSITORY,
   type IActivityRepository,
 } from 'src/datasource/courses/repository/interface/activity.repository.interface';
-import {
-  ActivityType,
-  WritingPayload,
-} from 'src/domain/courses/model/activity.model';
 
 @Injectable()
 export class ProgressServiceImpl implements IProgressService {
@@ -175,14 +172,47 @@ export class ProgressServiceImpl implements IProgressService {
     return new Set(ids);
   }
 
-  async getCompletedActivitiesCountByDate(
+  async getDailyProgressSummary(
     userId: string,
     date: Date,
-  ): Promise<number> {
-    return this.activityProgressRepository.countCompletedByStudentAndDate(
-      userId,
-      date,
+  ): Promise<DailyProgressSummary> {
+    const activityProgress: ActivityProgress[] =
+      await this.activityProgressRepository.findCompletedByStudentAndDate(
+        userId,
+        date,
+      );
+
+    const completedToday = activityProgress.length;
+
+    const totalSeconds = activityProgress.reduce((acc, ap) => {
+      const createdAt = ap.getCreatedAt();
+      const updatedAt = ap.getUpdatedAt();
+      if (!createdAt || !updatedAt) return acc;
+
+      const diffMs = updatedAt.getTime() - createdAt.getTime();
+      return acc + Math.max(0, Math.floor(diffMs / 1000));
+    }, 0);
+
+    const minutes = Math.floor(totalSeconds / 60);
+    const seconds = totalSeconds % 60;
+
+    const MAX_STARS_PER_ACTIVITY = 5;
+    const maxPossibleStars = completedToday * MAX_STARS_PER_ACTIVITY;
+    const earnedStars = activityProgress.reduce(
+      (acc, ap) => acc + ap.getStars(),
+      0,
     );
+
+    const totalProgress =
+      maxPossibleStars > 0
+        ? Math.round((earnedStars / maxPossibleStars) * 100)
+        : 0;
+
+    return {
+      completedToday,
+      timePlayed: { minutes, seconds },
+      totalProgress,
+    };
   }
 
   async getTopicStatus(
@@ -204,31 +234,53 @@ export class ProgressServiceImpl implements IProgressService {
     const { weekStart, weekEnd } = this.getWeekRange(referenceDate);
 
     const grouped =
-      await this.activityProgressRepository.countCompletedGroupedByDate(
+      await this.activityProgressRepository.getCompletedStatsGroupedByDate(
         userId,
         weekStart,
         weekEnd,
       );
 
-    const countByDate = new Map(grouped.map((g) => [g.date, g.count]));
+    const statsByDate = new Map(
+      grouped.map((g) => [
+        g.date,
+        { count: g.count, totalStars: g.totalStars },
+      ]),
+    );
 
     const days: IDailyCompletion[] = [];
+    let weeklyCompleted = 0;
+    let weeklyStars = 0;
+
     for (let i = 0; i < 7; i++) {
       const current = new Date(weekStart);
       current.setDate(weekStart.getDate() + i);
       const dateKey = current.toISOString().slice(0, 10);
 
+      const dayStats = statsByDate.get(dateKey) ?? { count: 0, totalStars: 0 };
+
       days.push({
         date: dateKey,
         dayOfWeek: this.dayNames[i],
-        completed: countByDate.get(dateKey) ?? 0,
+        completed: dayStats.count,
+        starsEarned: dayStats.totalStars,
       });
+
+      weeklyCompleted += dayStats.count;
+      weeklyStars += dayStats.totalStars;
     }
+
+    const MAX_STARS_PER_ACTIVITY = 5;
+    const maxPossibleStars = weeklyCompleted * MAX_STARS_PER_ACTIVITY;
+    const totalProgress =
+      maxPossibleStars > 0
+        ? Math.round((weeklyStars / maxPossibleStars) * 100)
+        : 0;
 
     return {
       weekStart: weekStart.toISOString().slice(0, 10),
       weekEnd: weekEnd.toISOString().slice(0, 10),
       days,
+      totalProgress,
     };
   }
 

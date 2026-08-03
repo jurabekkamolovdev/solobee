@@ -3,7 +3,6 @@ import {
   type IStudentService,
   ICreateStudent,
   IStudentProfile,
-  IStudentStatistics,
 } from './student.service.interface';
 import { Student } from '../model/student.model';
 import {
@@ -29,6 +28,7 @@ import {
   type IProgressService,
   IWeeklyStatistics,
 } from 'src/domain/progress/service/progress.service.interface';
+import { DailyProgressSummary } from 'src/domain/progress/service/progress.service.interface';
 
 @Injectable()
 export class StudentServiceImpl implements IStudentService {
@@ -105,14 +105,13 @@ export class StudentServiceImpl implements IStudentService {
       avatar: this.storageService.getPublicUrl(studentAvatar.getThumbnailKey()),
     };
   }
-  async getStudentStatistics(studentId: string): Promise<IStudentStatistics> {
-    const completedToday =
-      await this.progressService.getCompletedActivitiesCountByDate(
-        studentId,
-        new Date(),
-      );
+  async getStudentStatistics(studentId: string): Promise<DailyProgressSummary> {
+    const completedToday = await this.progressService.getDailyProgressSummary(
+      studentId,
+      new Date(),
+    );
 
-    return { completedToday };
+    return completedToday;
   }
 
   async getWeeklyStatistics(studentId: string): Promise<IWeeklyStatistics> {

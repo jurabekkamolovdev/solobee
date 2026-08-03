@@ -1,5 +1,6 @@
 import { Student } from '../model/student.model';
 import { IWeeklyStatistics } from 'src/domain/progress/service/progress.service.interface';
+import { DailyProgressSummary } from 'src/domain/progress/service/progress.service.interface';
 
 export interface IStudentService {
   createStudent(params: ICreateStudent): Promise<boolean>;
@@ -10,7 +11,7 @@ export interface IStudentService {
   getStudentProfile(studentId: string): Promise<IStudentProfile>;
   deleteStudent(studentId: string): Promise<boolean>;
   getWeeklyStatistics(studentId: string): Promise<IWeeklyStatistics>;
-  getStudentStatistics(studentId: string): Promise<IStudentStatistics>;
+  getStudentStatistics(studentId: string): Promise<DailyProgressSummary>;
 }
 
 export const STUDENT_SERVICE = Symbol('STUDENT_SERVICE');
@@ -35,8 +36,4 @@ export interface IStudentProfile {
   age: number;
   score: number;
   avatar: string | null;
-}
-
-export interface IStudentStatistics {
-  completedToday: number;
 }

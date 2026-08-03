@@ -30,10 +30,10 @@ export interface IProgressService {
     topicIds: string[],
   ): Promise<Set<string>>;
 
-  getCompletedActivitiesCountByDate(
+  getDailyProgressSummary(
     userId: string,
     date: Date,
-  ): Promise<number>;
+  ): Promise<DailyProgressSummary>;
 
   getTopicStatus(userId: string, topicId: string): Promise<ProgressStatus>;
 
@@ -47,12 +47,20 @@ export interface IDailyCompletion {
   date: string;
   dayOfWeek: string;
   completed: number;
+  starsEarned: number;
 }
 
 export interface IWeeklyStatistics {
   weekStart: string;
   weekEnd: string;
   days: IDailyCompletion[];
+  totalProgress: number;
+}
+
+export interface DailyProgressSummary {
+  completedToday: number;
+  timePlayed: { minutes: number; seconds: number };
+  totalProgress: number;
 }
 
 export const PROGRESS_SERVICE = Symbol('PROGRESS_SERVICE');
