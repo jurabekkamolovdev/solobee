@@ -4,6 +4,7 @@ export interface ActivityAttemptResult {
   attemptCount: number;
   threshold: number;
   completed: boolean;
+  star: number;
 }
 
 export interface ActivityProgressSnapshot {
@@ -16,7 +17,7 @@ export interface IProgressService {
   reportActivityAttempt(
     userId: string,
     activityId: string,
-    result?: string,
+    result?: string | boolean,
   ): Promise<ActivityAttemptResult>;
 
   getActivityProgressByTopic(

@@ -44,7 +44,7 @@ export class Student {
     this.birthDate = params.birthDate ? new Date(params.birthDate) : null;
     this.address = params.address ?? null;
     this.parentPhone = params.parentPhone ?? null;
-    this.score = params.score ?? 12000;
+    this.score = params.score ?? 0;
     this.currentTopicId = params.currentTopicId ?? null;
     this.currentCategoryId = params.currentCategoryId ?? null;
     this.createdAt = params.createdAt ?? new Date();

@@ -101,6 +101,7 @@ export class StudentServiceImpl implements IStudentService {
       lastName: student.getLastName(),
       username: student.getUsername(),
       age: student.getAge(),
+      score: student.getScore(),
       avatar: this.storageService.getPublicUrl(studentAvatar.getThumbnailKey()),
     };
   }

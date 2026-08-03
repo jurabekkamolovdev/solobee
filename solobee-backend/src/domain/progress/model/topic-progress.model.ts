@@ -35,10 +35,13 @@ export class TopicProgress {
     return new TopicProgress({ id: uuidv4(), studentUserId, topicId, status });
   }
 
+  addStars(stars: number) {
+    this.starsEarned += stars;
+  }
+
   complete(): void {
     if (this.status === ProgressStatus.COMPLETED) return;
     this.status = ProgressStatus.COMPLETED;
-    this.starsEarned = 3;
   }
 
   unlock(): void {

@@ -33,6 +33,7 @@ export interface IStudentProfile {
   lastName: string;
   username: string;
   age: number;
+  score: number;
   avatar: string | null;
 }
 

@@ -54,30 +54,13 @@ export class ProgressServiceImpl implements IProgressService {
   async reportActivityAttempt(
     userId: string,
     activityId: string,
-    result?: string,
+    result?: string | boolean,
   ): Promise<ActivityAttemptResult> {
     const activity = await this.activityRefRepository.findById(activityId);
     if (!activity) throw new NotFoundException('Activity not found');
 
-    const type = activity.getType();
+    // const type = activity.getType();
     const threshold = ATTEMPT_THRESHOLDS[activity.getType()] ?? 1;
-
-    if (type === ActivityType.WRITING) {
-      const payload = activity.getPayload() as WritingPayload;
-      if (payload.mode === 'spell') {
-        const isCorrect =
-          result !== undefined &&
-          payload.answer.trim().toLowerCase() === result.trim().toLowerCase();
-
-        if (!isCorrect) {
-          return {
-            attemptCount: 0,
-            threshold,
-            completed: false,
-          };
-        }
-      }
-    }
 
     let progress =
       await this.activityProgressRepository.findByStudentAndActivity(
@@ -89,22 +72,75 @@ export class ProgressServiceImpl implements IProgressService {
       progress = ActivityProgress.create(userId, activityId);
     }
 
-    const justCompleted = progress.recordAttempt(threshold);
+    // if (type === ActivityType.WRITING) {
+    //   const payload = activity.getPayload() as WritingPayload;
+    //   if (payload.mode === 'spell') {
+    //     result = result?.toString();
+    //     const isCorrect =
+    //       result !== undefined &&
+    //       payload.answer.trim().toLowerCase() === result.trim().toLowerCase();
 
-    await this.activityProgressRepository.save(progress);
-
-    if (justCompleted) {
-      this.eventEmitter.emit('activity.completed', {
-        studentUserId: userId,
-        activityId,
-        topicId: activity.getTopicId(),
-      });
+    //     if (!isCorrect) {
+    //       progress.incrementAttempt();
+    //       await this.activityProgressRepository.save(progress);
+    //       return {
+    //         attemptCount: progress.getAttemptCount(),
+    //         threshold,
+    //         completed: false,
+    //       };
+    //     }
+    //   }
+    // } else if (
+    //   type === ActivityType.WORDHUNT ||
+    //   type === ActivityType.PICQUEST
+    // ) {
+    //   if (!result) {
+    //     progress.incrementAttempt();
+    //     await this.activityProgressRepository.save(progress);
+    //     return {
+    //       attemptCount: progress.getAttemptCount(),
+    //       threshold,
+    //       completed: false,
+    //     };
+    //   }
+    // } else if (type === ActivityType.LEARN) {
+    //   progress.incrementAttempt();
+    //   await this.activityProgressRepository.save(progress);
+    //   if (progress.getAttemptCount() < threshold) {
+    //     return {
+    //       attemptCount: progress.getAttemptCount(),
+    //       threshold,
+    //       completed: false,
+    //     };
+    //   }
+    // }
+    if (!progress.getIsCompleted()) {
+      progress.recordAttempt(activity, result);
+      await this.activityProgressRepository.save(progress);
+      if (progress.getIsCompleted()) {
+        this.eventEmitter.emit('activity.completed', {
+          studentUserId: userId,
+          activityId,
+          topicId: activity.getTopicId(),
+          stars: progress.getStars(),
+        });
+      }
+      await this.activityProgressRepository.save(progress);
     }
+
+    // if (progress.getIsCompleted()) {
+    //   this.eventEmitter.emit('activity.completed', {
+    //     studentUserId: userId,
+    //     activityId,
+    //     topicId: activity.getTopicId(),
+    //   });
+    // }
 
     return {
       attemptCount: progress.getAttemptCount(),
       threshold,
       completed: progress.getIsCompleted(),
+      star: progress.getStars(),
     };
   }
 

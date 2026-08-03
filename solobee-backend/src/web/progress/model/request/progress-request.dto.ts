@@ -1,4 +1,4 @@
-import { IsOptional, IsString } from 'class-validator';
+import { IsBoolean, IsOptional, IsString, ValidateIf } from 'class-validator';
 import { ApiPropertyOptional } from '@nestjs/swagger';
 
 export class ReportAttemptDto {
@@ -7,6 +7,9 @@ export class ReportAttemptDto {
     example: 'RED',
   })
   @IsOptional()
+  @ValidateIf((_, value) => typeof value === 'string')
   @IsString()
-  result?: string;
+  @ValidateIf((_, value) => typeof value === 'boolean')
+  @IsBoolean()
+  result?: string | boolean;
 }

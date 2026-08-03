@@ -44,12 +44,15 @@ export class ProgressListener {
     studentUserId: string;
     activityId: string;
     topicId: string;
+    stars: number;
   }): Promise<void> {
     this.logger.debug(`Processing completion for topic: ${payload.topicId}`);
 
     const activityIds = await this.activityRefRepository.findIdsByTopicId(
       payload.topicId,
     );
+
+    // console.log('-----ActivityIds ', activityIds.length);
     if (activityIds.length === 0) return;
 
     const completedCount =
@@ -57,10 +60,46 @@ export class ProgressListener {
         payload.studentUserId,
         activityIds,
       );
+    // console.log('-----completedCount ', completedCount);
+
+    let topicProgress =
+      await this.topicProgressRepository.findByStudentAndTopic(
+        payload.studentUserId,
+        payload.topicId,
+      );
+
+    if (!topicProgress) {
+      topicProgress = TopicProgress.create(
+        payload.studentUserId,
+        payload.topicId,
+      );
+    }
+
+    if (topicProgress.isAlreadyCompleted()) return;
+
+    // console.log('--------STARTS------ACTIVITY ', payload.stars);
+
+    topicProgress.addStars(payload.stars);
+
+    // console.log('--------STARTS------TOPIC ', topicProgress.getStarsEarned());
 
     if (completedCount >= activityIds.length) {
-      await this.completeTopic(payload.studentUserId, payload.topicId);
+      topicProgress.complete();
+      const student = await this.studentRepository.findByUserId(
+        payload.studentUserId,
+      );
+      console.log(student);
+      if (student) {
+        student.addScore(topicProgress.getStarsEarned());
+        // console.log('--------STARTS------STUDENT ', student.getScore());
+        await this.studentRepository.save(student);
+      }
+      await this.unlockNextTopic(payload.studentUserId, payload.topicId);
+
+      // await this.completeTopic(payload.studentUserId, payload.topicId);
     }
+
+    await this.topicProgressRepository.save(topicProgress);
   }
 
   private async completeTopic(userId: string, topicId: string): Promise<void> {

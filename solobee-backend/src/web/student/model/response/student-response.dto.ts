@@ -40,6 +40,9 @@ export class StudentProfileDataDto {
   age: number;
 
   @ApiProperty()
+  score: number;
+
+  @ApiProperty()
   avatar: string;
 }
 

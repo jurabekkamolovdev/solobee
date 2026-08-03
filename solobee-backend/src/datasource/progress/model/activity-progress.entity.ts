@@ -32,6 +32,9 @@ export class ActivityProgressEntity {
   activity: ActivityEntity;
 
   @Column({ default: 0 })
+  starsEarned: number;
+
+  @Column({ default: 0 })
   attemptCount: number;
 
   @Column({ default: false })

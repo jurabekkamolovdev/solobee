@@ -9,6 +9,7 @@ export class ActivityProgressMapper {
       id: entity.id,
       studentUserId: entity.studentUserId,
       activityId: entity.activityId,
+      starsEarned: entity.starsEarned,
       attemptCount: entity.attemptCount,
       isCompleted: entity.isCompleted,
     });
@@ -19,6 +20,7 @@ export class ActivityProgressMapper {
     entity.id = domain.getId();
     entity.studentUserId = domain.getStudentUserId();
     entity.activityId = domain.getActivityId();
+    entity.starsEarned = domain.getStars();
     entity.attemptCount = domain.getAttemptCount();
     entity.isCompleted = domain.getIsCompleted();
     return entity;
