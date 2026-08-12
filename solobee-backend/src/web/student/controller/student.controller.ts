@@ -8,6 +8,7 @@ import {
   Req,
   Param,
   Delete,
+  Patch,
 } from '@nestjs/common';
 import {
   ApiTags,
@@ -25,6 +26,8 @@ import { Role } from 'src/core/utils/role.enum';
 import {
   CreateStudentDto,
   GetStudentsQueryDto,
+  UpdateStudentDto,
+  SubmitPaymentDto,
 } from '../model/request/create-student.dto';
 import { ErrorResponse, ObjectResponse } from 'src/core/utils/base-response';
 import {
@@ -36,6 +39,15 @@ import {
 import { StudentWebMapper } from '../mapper/student-web.mapper';
 import { Public } from 'src/core/decorators/public.decorator';
 import { JwtPayload } from 'src/infrastructure/jwt/jwt.strategy';
+import {
+  UseInterceptors,
+  UploadedFile,
+  ParseFilePipe,
+  FileTypeValidator,
+  MaxFileSizeValidator,
+} from '@nestjs/common';
+import { FileInterceptor } from '@nestjs/platform-express';
+import { ApiConsumes, ApiBody } from '@nestjs/swagger';
 
 @ApiTags('Students')
 @ApiBearerAuth()
@@ -67,6 +79,75 @@ export class StudentController {
       this.webMapper.toCreateParams(dto),
     );
 
+    return new ObjectResponse(response);
+  }
+
+  @Roles(Role.STUDENT)
+  @Patch('update')
+  @ApiOperation({ summary: 'Update student' })
+  @ApiResponse({
+    status: 200,
+    description: 'Student successfully updated',
+    type: ObjectResponse,
+  })
+  @ApiResponse({
+    status: 401,
+    description: 'Unauthorized',
+    type: ErrorResponse,
+  })
+  async updateStudent(
+    @Req() req: { user: JwtPayload },
+    @Body() dto: UpdateStudentDto,
+  ) {
+    const response = await this.studentService.updateStudent(
+      req.user.id,
+      this.webMapper.toUpdateParams(dto),
+    );
+    return new ObjectResponse(response);
+  }
+
+  @Roles(Role.STUDENT)
+  @Patch('payment')
+  @UseInterceptors(FileInterceptor('file'))
+  @ApiConsumes('multipart/form-data')
+  @ApiOperation({ summary: "Student to'lov chekini yuboradi" })
+  @ApiBody({
+    schema: {
+      type: 'object',
+      properties: {
+        file: { type: 'string', format: 'binary' },
+        username: { type: 'string', example: 'Ali Valiyev' },
+      },
+      required: ['file', 'username'],
+    },
+  })
+  @ApiResponse({
+    status: 200,
+    description: "To'lov muvaffaqiyatli yuborildi",
+    type: ObjectResponse,
+  })
+  @ApiResponse({
+    status: 401,
+    description: 'Unauthorized',
+    type: ErrorResponse,
+  })
+  async submitPayment(
+    @Req() req: { user: JwtPayload },
+    @UploadedFile(
+      new ParseFilePipe({
+        validators: [
+          new FileTypeValidator({ fileType: '.(png|jpeg|jpg|webp)' }),
+          new MaxFileSizeValidator({ maxSize: 5 * 1024 * 1024 }), // 5MB
+        ],
+      }),
+    )
+    file: Express.Multer.File,
+    @Body() dto: SubmitPaymentDto,
+  ) {
+    const response = await this.studentService.submitPayment(req.user.id, {
+      file,
+      username: dto.username,
+    });
     return new ObjectResponse(response);
   }
 

@@ -95,19 +95,10 @@ export class DailyCompletionDto {
   @ApiProperty({ example: '2026-07-27' })
   date: string;
 
-  @ApiProperty({ example: 'Dushanba' })
-  dayOfWeek: string;
-
-  @ApiProperty({
-    example: 3,
-    description: 'Shu kuni tugallangan activity-lar soni',
-  })
+  @ApiProperty({ example: 3, description: 'Bajarilgan faoliyatlar soni' })
   completed: number;
 
-  @ApiProperty({
-    example: 8,
-    description: "Shu kuni yig'ilgan ball",
-  })
+  @ApiProperty({ example: 12, description: "Yig'ilgan yulduzlar soni" })
   starsEarned: number;
 }
 
@@ -130,6 +121,13 @@ export class StudentWeeklyStatisticsDto {
       "Haftalik umumiy progress foizi (yig'ilgan ball / maksimal ball * 100)",
   })
   totalProgress: number;
+
+  @ApiProperty({
+    example: 5,
+    description:
+      "Hafta davomida bir kunda bajarilgan eng ko'p faoliyatlar soni",
+  })
+  maxTaskCount: number;
 }
 
 export class StudentWeeklyStatisticsResponseDto extends BaseResponse {

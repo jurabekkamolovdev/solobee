@@ -3,6 +3,8 @@ import {
   type IStudentService,
   ICreateStudent,
   IStudentProfile,
+  IUpdateStudent,
+  ISubmitPayment,
 } from './student.service.interface';
 import { Student } from '../model/student.model';
 import {
@@ -44,6 +46,23 @@ export class StudentServiceImpl implements IStudentService {
     @Inject(PROGRESS_SERVICE)
     private readonly progressService: IProgressService,
   ) {}
+
+  async submitPayment(
+    studentId: string,
+    params: ISubmitPayment,
+  ): Promise<boolean> {
+    const student = await this.studentRepository.findByUserId(studentId);
+    if (!student) throw new BadRequestException('Student topilmadi');
+
+    const receiptKey = await this.storageService.uploadImageWithCompression(
+      'payments',
+      params.file,
+    );
+
+    student.submitPayment(receiptKey, params.username);
+
+    return this.studentRepository.save(student);
+  }
 
   async createStudent(params: ICreateStudent): Promise<boolean> {
     const user: User = await this.userService.create({
@@ -116,5 +135,21 @@ export class StudentServiceImpl implements IStudentService {
 
   async getWeeklyStatistics(studentId: string): Promise<IWeeklyStatistics> {
     return this.progressService.getWeeklyStatistics(studentId, new Date());
+  }
+
+  async updateStudent(
+    studentId: string,
+    params: IUpdateStudent,
+  ): Promise<boolean> {
+    const student = await this.studentRepository.findByUserId(studentId);
+    if (!student) throw new BadRequestException('Student topilmadi');
+
+    if (params.avatarId) {
+      await this.avatarService.getById(params.avatarId);
+    }
+
+    student.updateProfile(params);
+
+    return this.studentRepository.save(student);
   }
 }

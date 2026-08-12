@@ -61,3 +61,41 @@ export class GetStudentsQueryDto {
   @Max(100)
   limit: number = 10;
 }
+
+export class UpdateStudentDto {
+  @ApiPropertyOptional({ example: 'ali123' })
+  @IsOptional()
+  @IsString()
+  username?: string;
+
+  @ApiPropertyOptional({ example: 'Ali' })
+  @IsOptional()
+  @IsString()
+  firstName?: string;
+
+  @ApiPropertyOptional({ example: 'Valiyev' })
+  @IsOptional()
+  @IsString()
+  lastName?: string;
+
+  @ApiPropertyOptional({ example: 6 })
+  @IsOptional()
+  @IsInt()
+  @Min(1)
+  @Max(18)
+  age?: number;
+
+  @ApiPropertyOptional({ example: 'c1a2b3d4-5678-90ab-cdef-1234567890ab' })
+  @IsOptional()
+  avatarId?: string;
+}
+
+export class SubmitPaymentDto {
+  @ApiProperty({
+    example: 'Ali Valiyev',
+    description: 'Chekda yozilgan ism/username',
+  })
+  @IsString()
+  @IsNotEmpty()
+  username: string;
+}

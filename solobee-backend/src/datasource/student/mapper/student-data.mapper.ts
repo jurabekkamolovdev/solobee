@@ -19,6 +19,8 @@ export class StudentDataMapper {
       score: entity.score,
       currentTopicId: entity.currentTopicId,
       currentCategoryId: entity.currentCategoryId,
+      paymentReceiptKey: entity.paymentReceiptKey,
+      paymentUsername: entity.paymentUsername,
       createdAt: entity.createdAt,
       updatedAt: entity.updatedAt,
     });
@@ -39,6 +41,8 @@ export class StudentDataMapper {
     entity.score = domain.getScore();
     entity.currentTopicId = domain.getCurrentTopicId();
     entity.currentCategoryId = domain.getCurrentCategoryId();
+    entity.paymentReceiptKey = domain.getPaymentReceiptKey();
+    entity.paymentUsername = domain.getPaymentUsername();
     return entity;
   }
 }

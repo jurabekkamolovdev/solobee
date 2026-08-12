@@ -45,7 +45,6 @@ export interface IProgressService {
 
 export interface IDailyCompletion {
   date: string;
-  dayOfWeek: string;
   completed: number;
   starsEarned: number;
 }
@@ -55,6 +54,7 @@ export interface IWeeklyStatistics {
   weekEnd: string;
   days: IDailyCompletion[];
   totalProgress: number;
+  maxTaskCount: number;
 }
 
 export interface DailyProgressSummary {

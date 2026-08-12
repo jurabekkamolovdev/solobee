@@ -1,6 +1,12 @@
 import { Injectable } from '@nestjs/common';
-import { CreateStudentDto } from '../model/request/create-student.dto';
-import { ICreateStudent } from 'src/domain/student/service/student.service.interface';
+import {
+  CreateStudentDto,
+  UpdateStudentDto,
+} from '../model/request/create-student.dto';
+import {
+  ICreateStudent,
+  IUpdateStudent,
+} from 'src/domain/student/service/student.service.interface';
 import { Student } from 'src/domain/student/model/student.model';
 import { StudentListItemResponseDto } from '../model/response/student-response.dto';
 
@@ -24,6 +30,15 @@ export class StudentWebMapper {
     dto.lastName = student.getLastName();
     dto.age = student.getAge();
     return dto;
+  }
+  toUpdateParams(dto: UpdateStudentDto): IUpdateStudent {
+    return {
+      username: dto.username,
+      firstName: dto.firstName,
+      lastName: dto.lastName,
+      age: dto.age,
+      avatarId: dto.avatarId,
+    };
   }
 
   //   toNewStudentResponseDto(student: INewStudent): NewStudentResponseDto {

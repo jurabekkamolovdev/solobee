@@ -14,6 +14,8 @@ export class Student {
   private score: number;
   private currentTopicId: string | null;
   private currentCategoryId: string | null;
+  private paymentReceiptKey: string | null;
+  private paymentUsername: string | null;
   private createdAt: Date;
   private updatedAt: Date;
 
@@ -31,6 +33,8 @@ export class Student {
     score?: number;
     currentTopicId?: string | null;
     currentCategoryId?: string | null;
+    paymentReceiptKey?: string | null;
+    paymentUsername?: string | null;
     createdAt?: Date;
     updatedAt?: Date;
   }) {
@@ -47,6 +51,8 @@ export class Student {
     this.score = params.score ?? 0;
     this.currentTopicId = params.currentTopicId ?? null;
     this.currentCategoryId = params.currentCategoryId ?? null;
+    this.paymentReceiptKey = params.paymentReceiptKey ?? null;
+    this.paymentUsername = params.paymentUsername ?? null;
     this.createdAt = params.createdAt ?? new Date();
     this.updatedAt = params.updatedAt ?? new Date();
   }
@@ -76,6 +82,19 @@ export class Student {
     });
   }
 
+  submitPayment(receiptKey: string, username: string): void {
+    this.paymentReceiptKey = receiptKey;
+    this.paymentUsername = username;
+    this.updatedAt = new Date();
+  }
+
+  getPaymentReceiptKey(): string | null {
+    return this.paymentReceiptKey;
+  }
+  getPaymentUsername(): string | null {
+    return this.paymentUsername;
+  }
+
   addScore(points: number): void {
     if (points < 0) throw new Error('Score manfiy bolishi mumkin emas');
     this.score += points;
@@ -89,14 +108,20 @@ export class Student {
   }
 
   updateProfile(params: {
+    username?: string;
     firstName?: string;
     lastName?: string;
+    age?: number;
+    avatarId?: string;
     birthDate?: string | null;
     address?: string | null;
     parentPhone?: string | null;
   }): void {
+    if (params.username) this.username = params.username;
     if (params.firstName) this.firstName = params.firstName;
     if (params.lastName) this.lastName = params.lastName;
+    if (params.age !== undefined) this.age = params.age;
+    if (params.avatarId) this.avatarId = params.avatarId;
     if (params.birthDate !== undefined)
       this.birthDate = params.birthDate ? new Date(params.birthDate) : null;
     if (params.address !== undefined) this.address = params.address;

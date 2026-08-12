@@ -250,6 +250,7 @@ export class ProgressServiceImpl implements IProgressService {
     const days: IDailyCompletion[] = [];
     let weeklyCompleted = 0;
     let weeklyStars = 0;
+    let maxTaskCount = 0;
 
     for (let i = 0; i < 7; i++) {
       const current = new Date(weekStart);
@@ -260,13 +261,16 @@ export class ProgressServiceImpl implements IProgressService {
 
       days.push({
         date: dateKey,
-        dayOfWeek: this.dayNames[i],
         completed: dayStats.count,
         starsEarned: dayStats.totalStars,
       });
 
       weeklyCompleted += dayStats.count;
       weeklyStars += dayStats.totalStars;
+
+      if (dayStats.count > maxTaskCount) {
+        maxTaskCount = dayStats.count;
+      }
     }
 
     const MAX_STARS_PER_ACTIVITY = 5;
@@ -281,9 +285,9 @@ export class ProgressServiceImpl implements IProgressService {
       weekEnd: weekEnd.toISOString().slice(0, 10),
       days,
       totalProgress,
+      maxTaskCount,
     };
   }
-
   private getWeekRange(referenceDate: Date): {
     weekStart: Date;
     weekEnd: Date;

@@ -60,6 +60,12 @@ export class StudentEntity {
   @Column({ type: 'varchar', nullable: true })
   currentCategoryId: string | null;
 
+  @Column({ type: 'varchar', nullable: true })
+  paymentReceiptKey: string | null;
+
+  @Column({ type: 'varchar', nullable: true })
+  paymentUsername: string | null;
+
   @CreateDateColumn()
   createdAt: Date;
 

@@ -11,10 +11,17 @@ export interface IStudentService {
   getStudentProfile(studentId: string): Promise<IStudentProfile>;
   deleteStudent(studentId: string): Promise<boolean>;
   getWeeklyStatistics(studentId: string): Promise<IWeeklyStatistics>;
+  updateStudent(studentId: string, params: IUpdateStudent): Promise<boolean>;
+  submitPayment(studentId: string, params: ISubmitPayment): Promise<boolean>;
   getStudentStatistics(studentId: string): Promise<DailyProgressSummary>;
 }
 
 export const STUDENT_SERVICE = Symbol('STUDENT_SERVICE');
+
+export interface ISubmitPayment {
+  file: Express.Multer.File;
+  username: string;
+}
 
 export interface ICreateStudent {
   firstName: string;
@@ -36,4 +43,12 @@ export interface IStudentProfile {
   age: number;
   score: number;
   avatar: string | null;
+}
+
+export interface IUpdateStudent {
+  username?: string;
+  firstName?: string;
+  lastName?: string;
+  age?: number;
+  avatarId?: string;
 }
